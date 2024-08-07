@@ -1,4 +1,5 @@
 {
+  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
   "build": {
     "beforeDevCommand": "yarn dev",
     "beforeBuildCommand": "yarn build",
@@ -7,30 +8,34 @@
   },
   "package": {
     "productName": "rssrs",
-    "version": "0.0.0"
+    "version": "../package.json"
   },
   "tauri": {
     "allowlist": {
-      "all": false,
       "shell": {
-        "all": false,
         "open": true
+      },
+      "window": {
+        "maximize": true,
+        "show": true
       }
     },
     "windows": [
       {
-        "title": "rssrs",
-        "width": 800,
-        "height": 600
+        "title": "RSS",
+        "width": 1200,
+        "height": 700,
+        "center": true,
+        "visible": false
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'"
     },
     "bundle": {
-      "active": true,
+      "active": false,
       "targets": "all",
-      "identifier": "com.tauri.dev",
+      "identifier": "com.gmail.karoyqiu.qbt",
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",
