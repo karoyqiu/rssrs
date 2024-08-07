@@ -1,5 +1,5 @@
 use chrono::{DateTime, Local};
-use rusqlite::{params, Connection, Result};
+use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::{AppHandle, Manager, State};
@@ -92,14 +92,20 @@ fn upgrade_if_needed(db: &mut Connection, existing_version: u32) -> Result<(), r
 }
 
 #[derive(Debug, Deserialize, Serialize, Type)]
-/** 种子 */
+/// 种子
 pub struct Seed {
-  /** ID */
+  /// ID
   id: i64,
   /** 名称 */
   name: String,
   /** URL */
   url: String,
+  /**
+   * 图标
+   *
+   * TODO: 保存 URL 或 base64，估计是后者
+   */
+  favicon: Option<String>,
   /** 更新周期，分钟 */
   interval: i32,
   /** 最近抓取时间 */
@@ -108,14 +114,54 @@ pub struct Seed {
   last_fetch_ok: Option<bool>,
 }
 
+/// 插入种子。
 #[tauri::command]
 #[specta::specta]
-pub fn db_insert_seed(app_handle: AppHandle, name: String, url: String) -> bool {
+pub async fn db_insert_seed(app_handle: AppHandle, name: String, url: String) -> bool {
   let result = app_handle.db(|db| -> Result<(), rusqlite::Error> {
-    let mut stmt = db.prepare("INSERT INTO seeds (name, url) VALUES (?1, ?2)")?;
+    let mut stmt = db.prepare("INSERT INTO seeds (name, url, interval) VALUES (?1, ?2, 10)")?;
     stmt.execute([name, url])?;
     Ok(())
   });
 
   result.is_ok()
+}
+
+/// 获取所有种子。
+#[tauri::command]
+#[specta::specta]
+pub async fn db_get_all_seeds(app_handle: AppHandle) -> Vec<Seed> {
+  let result = app_handle.db(|db| -> Result<Vec<Seed>, rusqlite::Error> {
+    let mut stmt = db.prepare("SELECT * FROM seeds")?;
+    let mut rows = stmt.query([])?;
+    let mut items = Vec::new();
+
+    while let Some(row) = rows.next()? {
+      let ts: Option<i64> = row.get("last_fetched_at")?;
+
+      items.push(Seed {
+        id: row.get("id")?,
+        name: row.get("name")?,
+        url: row.get("url")?,
+        favicon: row.get("favicon")?,
+        interval: row.get("interval")?,
+        last_fetched_at: if let Some(ts) = ts {
+          Some(DateTime::from(DateTime::from_timestamp(ts, 0).unwrap()))
+        } else {
+          None
+        },
+        last_fetch_ok: row.get("last_fetch_ok")?,
+      });
+    }
+
+    Ok(items)
+  });
+
+  result.unwrap()
+
+  // if let Ok(items) = result {
+  //   items
+  // } else {
+  //   vec![]
+  // }
 }

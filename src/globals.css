@@ -57,12 +57,15 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
+
+  html {
+    font-size: 87.5%;
+  }
+
   body {
     @apply h-screen w-screen bg-background text-foreground;
   }
@@ -72,4 +75,8 @@
   #root {
     @apply h-screen w-screen;
   }
+}
+
+label.required {
+  @apply after:text-destructive after:content-['_*'];
 }
