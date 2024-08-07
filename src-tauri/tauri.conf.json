@@ -35,7 +35,7 @@
     "bundle": {
       "active": false,
       "targets": "all",
-      "identifier": "com.gmail.karoyqiu.qbt",
+      "identifier": "com.gmail.karoyqiu.rssrs",
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",

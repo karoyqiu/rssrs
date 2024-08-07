@@ -2468,6 +2468,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"next-themes@npm:^0.3.0":
+  version: 0.3.0
+  resolution: "next-themes@npm:0.3.0"
+  peerDependencies:
+    react: ^16.8 || ^17 || ^18
+    react-dom: ^16.8 || ^17 || ^18
+  checksum: 4285c4969eac517ad7addd773bcb71e7d14bc6c6e3b24eb97b80a6e06ac03fb6cb345e75dfb448156d14430d06289948eb8cfdeb52402ca7ce786093d01d2878
+  languageName: node
+  linkType: hard
+
 "node-gyp@npm:latest":
   version: 10.2.0
   resolution: "node-gyp@npm:10.2.0"
@@ -3020,6 +3030,7 @@ __metadata:
     class-variance-authority: ^0.7.0
     clsx: ^2.1.1
     lucide-react: ^0.424.0
+    next-themes: ^0.3.0
     postcss: ^8.4.41
     prettier: ^3.3.3
     prettier-plugin-organize-attributes: ^1.0.0
@@ -3028,6 +3039,7 @@ __metadata:
     react-dom: ^18.2.0
     react-hook-form: ^7.52.2
     react-resizable-panels: ^2.0.22
+    sonner: ^1.5.0
     tailwind-merge: ^2.4.0
     tailwindcss: ^3.4.7
     tailwindcss-animate: ^1.0.7
@@ -3128,6 +3140,16 @@ __metadata:
     ip-address: ^9.0.5
     smart-buffer: ^4.2.0
   checksum: 7a6b7f6eedf7482b9e4597d9a20e09505824208006ea8f2c49b71657427f3c137ca2ae662089baa73e1971c62322d535d9d0cf1c9235cf6f55e315c18203eadd
+  languageName: node
+  linkType: hard
+
+"sonner@npm:^1.5.0":
+  version: 1.5.0
+  resolution: "sonner@npm:1.5.0"
+  peerDependencies:
+    react: ^18.0.0
+    react-dom: ^18.0.0
+  checksum: 0b0f911785b74209a44fe85fe5b0cf3bd440c78271285026dc1290bb6e8c6296c92a01a0f72646d18312654c138838aeadd15a55c20954a193cb65ccf84f51e3
   languageName: node
   linkType: hard
 

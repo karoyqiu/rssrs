@@ -64,6 +64,12 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply h-screen w-screen bg-background text-foreground;
+  }
+}
+
+@layer components {
+  #root {
+    @apply h-screen w-screen;
   }
 }

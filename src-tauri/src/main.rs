@@ -7,8 +7,30 @@
 //     format!("Hello, {}! You've been greeted from Rust!", name)
 // }
 
+mod db;
+
+use db::{db_insert_seed, initialize, AppState};
+use specta::collect_types;
+use tauri::{Manager, State};
+use tauri_specta::ts;
+
 fn main() {
+  #[cfg(debug_assertions)]
+  ts::export(collect_types![db_insert_seed], "../src/lib/bindings.ts").unwrap();
+
   tauri::Builder::default()
+    .manage(AppState {
+      db: Default::default(),
+    })
+    .invoke_handler(tauri::generate_handler![db_insert_seed])
+    .setup(|app| {
+      let handle = app.handle();
+      let state: State<AppState> = handle.state();
+      let db = initialize(&handle).expect("Failed to initialize database");
+      *state.db.lock().unwrap() = Some(db);
+
+      Ok(())
+    })
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }
