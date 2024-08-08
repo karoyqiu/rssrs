@@ -38,7 +38,4 @@ export function dbSetSetting(key: string, value: string) {
     return invoke()<boolean>("db_set_setting", { key,value })
 }
 
-/**
- * 种子
- */
 export type Seed = { id: number; name: string; url: string; favicon: string | null; interval: number; last_fetched_at: string | null; last_fetch_ok: boolean | null }

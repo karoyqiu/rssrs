@@ -1,18 +1,16 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-// #[tauri::command]
-// fn greet(name: &str) -> String {
-//     format!("Hello, {}! You've been greeted from Rust!", name)
-// }
-
 mod db;
+mod job;
+mod seed;
 
 use db::{db_get_all_seeds, db_get_setting, db_insert_seed, db_set_setting, initialize, AppState};
+use job::check_seeds;
 use specta::{collect_types, ts::BigIntExportBehavior};
-use tauri::{Manager, State};
+use tauri::{async_runtime::spawn, Manager, State};
 use tauri_specta::ts;
+use tokio_schedule::{every, Job};
 
 fn main() {
   #[cfg(debug_assertions)]
@@ -32,6 +30,27 @@ fn main() {
   )
   .unwrap();
 
+  let ctx = tauri::generate_context!();
+  let config = ctx.config().clone();
+
+  #[cfg(debug_assertions)]
+  let task = every(10).seconds().perform(move || {
+    let config = config.clone();
+    async move {
+      let _ = check_seeds(&config).await;
+    }
+  });
+
+  #[cfg(not(debug_assertions))]
+  let task = every(1).minute().perform(move || {
+    let config = config.clone();
+    async move {
+      let _ = check_seeds(&config).await;
+    }
+  });
+
+  spawn(task);
+
   tauri::Builder::default()
     .manage(AppState {
       db: Default::default(),
@@ -44,12 +63,13 @@ fn main() {
     ])
     .setup(|app| {
       let handle = app.handle();
+      let app_dir = handle.path_resolver().app_data_dir();
       let state: State<AppState> = handle.state();
-      let db = initialize(&handle).expect("Failed to initialize database");
+      let db = initialize(app_dir, false).expect("Failed to initialize database");
       *state.db.lock().unwrap() = Some(db);
 
       Ok(())
     })
-    .run(tauri::generate_context!())
+    .run(ctx)
     .expect("error while running tauri application");
 }

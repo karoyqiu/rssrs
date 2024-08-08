@@ -1,8 +1,10 @@
-use chrono::{DateTime, Local};
-use rusqlite::{Connection, Result};
-use serde::{Deserialize, Serialize};
-use specta::Type;
+use std::path::PathBuf;
+
+use chrono::DateTime;
+use rusqlite::{Connection, OpenFlags, Result, Row};
 use tauri::{AppHandle, Manager, State};
+
+use crate::seed::Seed;
 
 const CURRENT_DB_VERSION: u32 = 2;
 
@@ -15,9 +17,9 @@ pub trait DbAccess {
   where
     F: FnOnce(&Connection) -> TResult;
 
-  fn db_mut<F, TResult>(&self, operation: F) -> TResult
-  where
-    F: FnOnce(&mut Connection) -> TResult;
+  // fn db_mut<F, TResult>(&self, operation: F) -> TResult
+  // where
+  //   F: FnOnce(&mut Connection) -> TResult;
 }
 
 impl DbAccess for AppHandle {
@@ -32,27 +34,29 @@ impl DbAccess for AppHandle {
     operation(db)
   }
 
-  fn db_mut<F, TResult>(&self, operation: F) -> TResult
-  where
-    F: FnOnce(&mut Connection) -> TResult,
-  {
-    let app_state: State<AppState> = self.state();
-    let mut db_connection_guard = app_state.db.lock().unwrap();
-    let db = db_connection_guard.as_mut().unwrap();
+  // fn db_mut<F, TResult>(&self, operation: F) -> TResult
+  // where
+  //   F: FnOnce(&mut Connection) -> TResult,
+  // {
+  //   let app_state: State<AppState> = self.state();
+  //   let mut db_connection_guard = app_state.db.lock().unwrap();
+  //   let db = db_connection_guard.as_mut().unwrap();
 
-    operation(db)
-  }
+  //   operation(db)
+  // }
 }
 
-pub fn initialize(app_handle: &AppHandle) -> Result<Connection> {
-  let app_dir = app_handle
-    .path_resolver()
-    .app_data_dir()
-    .expect("The app data directory should exist.");
+pub fn initialize(app_dir: Option<PathBuf>, readonly: bool) -> Result<Connection> {
+  let app_dir = app_dir.expect("The app data directory should exist.");
   std::fs::create_dir_all(&app_dir).expect("The app data directory should be created.");
   let sqlite_path = app_dir.join("rssrs.db");
 
-  let mut db = Connection::open(sqlite_path)?;
+  let flags = if readonly {
+    OpenFlags::SQLITE_OPEN_READ_ONLY
+  } else {
+    OpenFlags::default()
+  };
+  let mut db = Connection::open_with_flags(sqlite_path, flags)?;
 
   let mut user_pragma = db.prepare("PRAGMA user_version")?;
   let existing_user_version: u32 = user_pragma.query_row([], |row| Ok(row.get(0)?))?;
@@ -97,29 +101,6 @@ fn upgrade_if_needed(db: &mut Connection, existing_version: u32) -> Result<()> {
   Ok(())
 }
 
-#[derive(Debug, Deserialize, Serialize, Type)]
-/// 种子
-pub struct Seed {
-  /// ID
-  id: i64,
-  /** 名称 */
-  name: String,
-  /** URL */
-  url: String,
-  /**
-   * 图标
-   *
-   * TODO: 保存 URL 或 base64，估计是后者
-   */
-  favicon: Option<String>,
-  /** 更新周期，分钟 */
-  interval: i32,
-  /** 最近抓取时间 */
-  last_fetched_at: Option<DateTime<Local>>,
-  /** 最近抓取是否成功 */
-  last_fetch_ok: Option<bool>,
-}
-
 /// 插入种子。
 #[tauri::command]
 #[specta::specta]
@@ -133,35 +114,43 @@ pub async fn db_insert_seed(app_handle: AppHandle, name: String, url: String) ->
   result.is_ok()
 }
 
+/// 将行转换为 Seed
+fn to_seed(row: &Row) -> Result<Seed> {
+  let ts: Option<i64> = row.get("last_fetched_at")?;
+
+  Ok(Seed {
+    id: row.get("id")?,
+    name: row.get("name")?,
+    url: row.get("url")?,
+    favicon: row.get("favicon")?,
+    interval: row.get("interval")?,
+    last_fetched_at: if let Some(ts) = ts {
+      Some(DateTime::from(DateTime::from_timestamp(ts, 0).unwrap()))
+    } else {
+      None
+    },
+    last_fetch_ok: row.get("last_fetch_ok")?,
+  })
+}
+
+/// 获取所有种子。
+pub fn get_all_seeds(db: &Connection) -> Result<Vec<Seed>> {
+  let mut stmt = db.prepare("SELECT * FROM seeds")?;
+  let mut rows = stmt.query([])?;
+  let mut items = Vec::new();
+
+  while let Some(row) = rows.next()? {
+    items.push(to_seed(row)?);
+  }
+
+  Ok(items)
+}
+
 /// 获取所有种子。
 #[tauri::command]
 #[specta::specta]
 pub async fn db_get_all_seeds(app_handle: AppHandle) -> Vec<Seed> {
-  let result = app_handle.db(|db| -> Result<Vec<Seed>> {
-    let mut stmt = db.prepare("SELECT * FROM seeds")?;
-    let mut rows = stmt.query([])?;
-    let mut items = Vec::new();
-
-    while let Some(row) = rows.next()? {
-      let ts: Option<i64> = row.get("last_fetched_at")?;
-
-      items.push(Seed {
-        id: row.get("id")?,
-        name: row.get("name")?,
-        url: row.get("url")?,
-        favicon: row.get("favicon")?,
-        interval: row.get("interval")?,
-        last_fetched_at: if let Some(ts) = ts {
-          Some(DateTime::from(DateTime::from_timestamp(ts, 0).unwrap()))
-        } else {
-          None
-        },
-        last_fetch_ok: row.get("last_fetch_ok")?,
-      });
-    }
-
-    Ok(items)
-  });
+  let result = app_handle.db(get_all_seeds);
 
   if let Ok(items) = result {
     items
