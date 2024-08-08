@@ -1,10 +1,10 @@
 use chrono::{DateTime, Local};
-use rusqlite::Connection;
+use rusqlite::{Connection, Result};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::{AppHandle, Manager, State};
 
-const CURRENT_DB_VERSION: u32 = 1;
+const CURRENT_DB_VERSION: u32 = 2;
 
 pub struct AppState {
   pub db: std::sync::Mutex<Option<Connection>>,
@@ -44,7 +44,7 @@ impl DbAccess for AppHandle {
   }
 }
 
-pub fn initialize(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error> {
+pub fn initialize(app_handle: &AppHandle) -> Result<Connection> {
   let app_dir = app_handle
     .path_resolver()
     .app_data_dir()
@@ -65,7 +65,7 @@ pub fn initialize(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error>
 }
 
 /// Upgrades the database to the current version.
-fn upgrade_if_needed(db: &mut Connection, existing_version: u32) -> Result<(), rusqlite::Error> {
+fn upgrade_if_needed(db: &mut Connection, existing_version: u32) -> Result<()> {
   if existing_version < CURRENT_DB_VERSION {
     db.pragma_update(None, "journal_mode", "WAL")?;
 
@@ -79,10 +79,16 @@ fn upgrade_if_needed(db: &mut Connection, existing_version: u32) -> Result<(), r
         id INTEGER PRIMARY KEY,
         name TEXT NOT NULL UNIQUE,
         url TEXT NOT NULL UNIQUE,
+        favicon TEXT,
         interval INTEGER,
         last_fetched_at INTEGER,
         last_fetch_ok INTEGER
-      );",
+      );
+      CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      );
+      ",
     )?;
 
     tx.commit()?;
@@ -118,7 +124,7 @@ pub struct Seed {
 #[tauri::command]
 #[specta::specta]
 pub async fn db_insert_seed(app_handle: AppHandle, name: String, url: String) -> bool {
-  let result = app_handle.db(|db| -> Result<(), rusqlite::Error> {
+  let result = app_handle.db(|db| -> Result<()> {
     let mut stmt = db.prepare("INSERT INTO seeds (name, url, interval) VALUES (?1, ?2, 10)")?;
     stmt.execute([name, url])?;
     Ok(())
@@ -131,7 +137,7 @@ pub async fn db_insert_seed(app_handle: AppHandle, name: String, url: String) ->
 #[tauri::command]
 #[specta::specta]
 pub async fn db_get_all_seeds(app_handle: AppHandle) -> Vec<Seed> {
-  let result = app_handle.db(|db| -> Result<Vec<Seed>, rusqlite::Error> {
+  let result = app_handle.db(|db| -> Result<Vec<Seed>> {
     let mut stmt = db.prepare("SELECT * FROM seeds")?;
     let mut rows = stmt.query([])?;
     let mut items = Vec::new();
@@ -157,11 +163,45 @@ pub async fn db_get_all_seeds(app_handle: AppHandle) -> Vec<Seed> {
     Ok(items)
   });
 
-  result.unwrap()
+  if let Ok(items) = result {
+    items
+  } else {
+    vec![]
+  }
+}
 
-  // if let Ok(items) = result {
-  //   items
-  // } else {
-  //   vec![]
-  // }
+/// 获取设置。
+#[tauri::command]
+#[specta::specta]
+pub async fn db_get_setting(app_handle: AppHandle, key: String) -> String {
+  let result = app_handle.db(|db| -> Result<String> {
+    let mut stmt = db.prepare("SELECT value FROM settings WHERE key = ?1")?;
+    let mut rows = stmt.query([key])?;
+
+    if let Some(row) = rows.next()? {
+      let value: String = row.get("value")?;
+      Ok(value)
+    } else {
+      Ok(String::default())
+    }
+  });
+
+  if let Ok(value) = result {
+    value
+  } else {
+    String::default()
+  }
+}
+
+/// 修改设置。
+#[tauri::command]
+#[specta::specta]
+pub async fn db_set_setting(app_handle: AppHandle, key: String, value: String) -> bool {
+  let result = app_handle.db(|db| -> Result<()> {
+    let mut stmt = db.prepare("REPLACE INTO settings (key, value) VALUES (?1, ?2)")?;
+    stmt.execute([key, value])?;
+    Ok(())
+  });
+
+  result.is_ok()
 }

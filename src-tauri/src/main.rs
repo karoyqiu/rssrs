@@ -9,7 +9,7 @@
 
 mod db;
 
-use db::{db_get_all_seeds, db_insert_seed, initialize, AppState};
+use db::{db_get_all_seeds, db_get_setting, db_insert_seed, db_set_setting, initialize, AppState};
 use specta::{collect_types, ts::BigIntExportBehavior};
 use tauri::{Manager, State};
 use tauri_specta::ts;
@@ -20,7 +20,13 @@ fn main() {
 
   #[cfg(debug_assertions)]
   ts::export_with_cfg(
-    collect_types![db_insert_seed, db_get_all_seeds].unwrap(),
+    collect_types![
+      db_insert_seed,
+      db_get_all_seeds,
+      db_get_setting,
+      db_set_setting
+    ]
+    .unwrap(),
     config,
     "../src/lib/bindings.ts",
   )
@@ -30,7 +36,12 @@ fn main() {
     .manage(AppState {
       db: Default::default(),
     })
-    .invoke_handler(tauri::generate_handler![db_insert_seed, db_get_all_seeds])
+    .invoke_handler(tauri::generate_handler![
+      db_insert_seed,
+      db_get_all_seeds,
+      db_get_setting,
+      db_set_setting
+    ])
     .setup(|app| {
       let handle = app.handle();
       let state: State<AppState> = handle.state();

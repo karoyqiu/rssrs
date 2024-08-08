@@ -1,3 +1,9 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { SaveIcon } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
+
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -7,44 +13,150 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { useId } from 'react';
-import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import useSetting from '@/lib/useSettings';
 
-export type ProxySettings = {
-  type: 'none' | 'sys' | 'http';
-  host: string;
-  port: number;
-};
+const proxySchema = z
+  .object({
+    type: z.enum(['none', 'sys', 'http']),
+    host: z.string(),
+    port: z.coerce.number().int().min(0).max(65535),
+  })
+  .refine(
+    (arg) => arg.type !== 'http' || (arg.host.length > 0 && arg.port > 0),
+    (arg) => {
+      if (arg.host.length === 0) {
+        return {
+          message: 'Hostname must not be empty.',
+          path: ['host'],
+        };
+      }
+
+      return {
+        message: 'Port must not be zero.',
+        path: ['port'],
+      };
+    },
+  );
+
+export type ProxySettings = z.infer<typeof proxySchema>;
+
+const defaultProxySettings = Object.freeze<ProxySettings>({
+  type: 'sys',
+  host: '127.0.0.1',
+  port: 8080,
+});
 
 export default function ProxySettingsCard() {
-  const id = useId();
+  const [proxy, save] = useSetting('proxy', defaultProxySettings);
+  const form = useForm<ProxySettings>({
+    resolver: zodResolver(proxySchema),
+    defaultValues: proxy,
+  });
+  const values = form.watch();
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Proxy</CardTitle>
-        <CardDescription>Use a proxy to access the internet.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <RadioGroup>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="none" id={`${id}none`} />
-            <Label htmlFor={`${id}none`}>Do not use proxy</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="sys" id={`${id}sys`} />
-            <Label htmlFor={`${id}sys`}>Use system proxy</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="http" id={`${id}man`} />
-            <Label htmlFor={`${id}man`}>Use the proxy blow</Label>
-          </div>
-        </RadioGroup>
-      </CardContent>
-      <CardFooter>
-        <Button>Save changes</Button>
-      </CardFooter>
-    </Card>
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(async (values) => {
+          const ok = await save(values);
+
+          if (ok) {
+            toast.success('Proxy settings saved.');
+          } else {
+            toast.error('Failed to save proxy settings.');
+          }
+        })}
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle>Proxy</CardTitle>
+            <CardDescription>Use a proxy to access the internet.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <RadioGroup defaultValue={field.value} onValueChange={field.onChange}>
+                      <FormItem className="flex items-center gap-2 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem className="peer" value="none" />
+                        </FormControl>
+                        <FormLabel>Do not use proxy</FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center gap-2 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem className="peer" value="sys" />
+                        </FormControl>
+                        <FormLabel>Use system proxy</FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center gap-2 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem className="peer" value="http" />
+                        </FormControl>
+                        <FormLabel>Use the proxy blow</FormLabel>
+                      </FormItem>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex w-full flex-col gap-2 pl-6">
+              <FormField
+                control={form.control}
+                name="host"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Hostname</FormLabel>
+                    <FormControl>
+                      <Input {...field} disabled={values.type !== 'http'} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="port"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Port</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        disabled={values.type !== 'http'}
+                        type="number"
+                        min={0}
+                        max={65535}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </CardContent>
+          <CardFooter className="flex flex-row-reverse">
+            <Button type="submit">
+              <SaveIcon />
+              Save
+            </Button>
+          </CardFooter>
+        </Card>
+      </form>
+    </Form>
   );
 }
