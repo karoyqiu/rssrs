@@ -77,6 +77,10 @@
   }
 }
 
+.lucide {
+  @apply size-5;
+}
+
 label.required {
   @apply after:text-destructive after:content-['_*'];
 }
