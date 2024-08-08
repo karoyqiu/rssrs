@@ -117,7 +117,6 @@ fn save_last_fetch(config: &Config, seed_id: i64, ok: bool) -> Result<()> {
 pub async fn check_seeds(config: &Config) -> Result<()> {
   // 读取代理设置和种子
   let (proxy, seeds) = get_data(config)?;
-  println!("Proxy: {:?}", &proxy);
 
   for seed in seeds {
     if seed.should_fetch() {

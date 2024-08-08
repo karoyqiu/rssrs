@@ -43,11 +43,10 @@ impl Seed {
   }
 }
 
+#[derive(Debug, Deserialize, Serialize, Type)]
 pub struct SeedItem {
   /// ID
   pub id: i64,
-  /// GUID
-  pub guid: String,
   /// 种子 ID
   pub seed_id: i64,
   /// 标题
@@ -55,7 +54,7 @@ pub struct SeedItem {
   /// 作者
   pub author: String,
   /// 描述
-  pub desc: String,
+  pub desc: Option<String>,
   /// 链接
   pub link: String,
   /// 发布时间，UNIX Epoch

@@ -11,6 +11,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import useSeeds from '@/lib/useSeeds';
 
 import '@/globals.css';
+import ItemList from './components/ItemList';
 
 function App() {
   const [seeds] = useSeeds();
@@ -53,7 +54,11 @@ function App() {
         </div>
       </ResizablePanel>
       <ResizableHandle />
-      <ResizablePanel minSize={50}>Main</ResizablePanel>
+      <ResizablePanel minSize={50}>
+        <ScrollArea className="@container h-full w-full">
+          <ItemList />
+        </ScrollArea>
+      </ResizablePanel>
     </ResizablePanelGroup>
   );
 }

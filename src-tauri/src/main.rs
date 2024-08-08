@@ -5,7 +5,10 @@ mod db;
 mod job;
 mod seed;
 
-use db::{db_get_all_seeds, db_get_setting, db_insert_seed, db_set_setting, initialize, AppState};
+use db::{
+  db_get_all_seeds, db_get_items, db_get_setting, db_insert_seed, db_set_setting, initialize,
+  AppState,
+};
 use job::check_seeds;
 use specta::{collect_types, ts::BigIntExportBehavior};
 use tauri::{async_runtime::spawn, Manager, State};
@@ -21,6 +24,7 @@ fn main() {
     collect_types![
       db_insert_seed,
       db_get_all_seeds,
+      db_get_items,
       db_get_setting,
       db_set_setting
     ]
@@ -58,6 +62,7 @@ fn main() {
     .invoke_handler(tauri::generate_handler![
       db_insert_seed,
       db_get_all_seeds,
+      db_get_items,
       db_get_setting,
       db_set_setting
     ])

@@ -1,9 +1,11 @@
 use std::path::PathBuf;
 
-use rusqlite::{Connection, OpenFlags, Result, Row};
+use rusqlite::{params, Connection, OpenFlags, Result, Row};
+use serde::{Deserialize, Serialize};
+use specta::Type;
 use tauri::{AppHandle, Manager, State};
 
-use crate::seed::Seed;
+use crate::seed::{Seed, SeedItem};
 
 const CURRENT_DB_VERSION: u32 = 3;
 
@@ -162,6 +164,74 @@ pub async fn db_get_all_seeds(app_handle: AppHandle) -> Vec<Seed> {
   } else {
     vec![]
   }
+}
+
+#[derive(Debug, Deserialize, Serialize, Type)]
+pub struct ItemFilters {
+  pub seed_id: Option<i64>,
+  pub cursor: Option<String>,
+  pub limit: Option<usize>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Type)]
+pub struct ItemResult {
+  items: Vec<SeedItem>,
+  next_cursor: Option<String>,
+}
+
+/// 获取项。
+#[tauri::command]
+#[specta::specta]
+pub async fn db_get_items(app_handle: AppHandle, filters: ItemFilters) -> ItemResult {
+  let result = app_handle.db(move |db| -> Result<ItemResult> {
+    let sql = String::from("SELECT * FROM items WHERE pub_date <= ?1 AND id >= ?2 ORDER BY pub_date DESC, id ASC LIMIT ?3");
+    let mut pub_date = i64::MAX;
+    let mut id = 0i64;
+    let limit = filters.limit.unwrap_or(20);
+
+    if let Some(cursor) = filters.cursor {
+      // cursor 格式：pub_date:id
+      let splitted: Vec<&str> = cursor.split(':').collect();
+      pub_date = splitted[0].parse().unwrap_or(i64::MAX);
+      id = splitted[1].parse().unwrap_or(0);
+    }
+
+    let mut stmt = db.prepare(&sql)?;
+    let mut rows = stmt.query(params![pub_date, id, limit + 1])?;
+    let mut items = Vec::new();
+
+    while let Some(row) = rows.next()? {
+      items.push(SeedItem {
+        id: row.get("id")?,
+        seed_id: row.get("seed_id")?,
+        title: row.get("title")?,
+        author: row.get("author")?,
+        desc: row.get("desc")?,
+        link: row.get("link")?,
+        pub_date: row.get("pub_date")?,
+        unread: row.get("unread")?,
+      });
+    }
+
+    let next_cursor = if items.len() > limit {
+      let last = items.pop().unwrap();
+      Some(format!("{}:{}", last.pub_date.unwrap_or(0), last.id))
+    } else {
+      None
+    };
+
+    Ok(ItemResult{ items, next_cursor })
+  });
+
+  result.unwrap()
+  // if let Ok(result) = result {
+  //   result
+  // } else {
+  //   ItemResult {
+  //     items: vec![],
+  //     next_cursor: None,
+  //   }
+  // }
 }
 
 /// 获取设置。

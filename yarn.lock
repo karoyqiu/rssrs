@@ -204,6 +204,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.13.10":
+  version: 7.25.0
+  resolution: "@babel/runtime@npm:7.25.0"
+  dependencies:
+    regenerator-runtime: ^0.14.0
+  checksum: 4a2a374a58eb01aaa65c5762606e90b3a1f448e0c637d42278b6cc0b42a9f5399b5f381ba9f237ee087da2860d14dd2d1de7bddcbe18be6a3cafba97e44bed64
+  languageName: node
+  linkType: hard
+
 "@babel/template@npm:^7.25.0":
   version: 7.25.0
   resolution: "@babel/template@npm:7.25.0"
@@ -1298,6 +1307,15 @@ __metadata:
   version: 4.20.0
   resolution: "@rollup/rollup-win32-x64-msvc@npm:4.20.0"
   conditions: os=win32 & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@tailwindcss/container-queries@npm:^0.1.1":
+  version: 0.1.1
+  resolution: "@tailwindcss/container-queries@npm:0.1.1"
+  peerDependencies:
+    tailwindcss: ">=3.2.0"
+  checksum: 2515ae0ce3ca5f3eb2a54116e97cbf4bce45d5fc7ad4b01f3204f51937461ff099c878048afbca22ca422ea3a9c1779df68a7cfe320ca155da47a8dde3257f4b
   languageName: node
   linkType: hard
 
@@ -2952,6 +2970,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"radash@npm:^12.1.0":
+  version: 12.1.0
+  resolution: "radash@npm:12.1.0"
+  checksum: 82e557e162228d8efecb80c311ae662e0ad0c20ca94ffba44aaeeb5a2dc2dc48735de6f259a574b53c2f06cdd532c7a623f6f8f16f3bf015e2cc7f65f2ef1c2e
+  languageName: node
+  linkType: hard
+
 "react-dom@npm:^18.2.0":
   version: 18.3.1
   resolution: "react-dom@npm:18.3.1"
@@ -3066,6 +3091,13 @@ __metadata:
   dependencies:
     picomatch: ^2.2.1
   checksum: 1ced032e6e45670b6d7352d71d21ce7edf7b9b928494dcaba6f11fba63180d9da6cd7061ebc34175ffda6ff529f481818c962952004d273178acd70f7059b320
+  languageName: node
+  linkType: hard
+
+"regenerator-runtime@npm:^0.14.0":
+  version: 0.14.1
+  resolution: "regenerator-runtime@npm:0.14.1"
+  checksum: 9f57c93277b5585d3c83b0cf76be47b473ae8c6d9142a46ce8b0291a04bb2cf902059f0f8445dcabb3fb7378e5fe4bb4ea1e008876343d42e46d3b484534ce38
   languageName: node
   linkType: hard
 
@@ -3186,6 +3218,7 @@ __metadata:
     "@radix-ui/react-toggle": ^1.1.0
     "@radix-ui/react-toggle-group": ^1.1.0
     "@radix-ui/react-tooltip": ^1.1.2
+    "@tailwindcss/container-queries": ^0.1.1
     "@tauri-apps/api": ^1
     "@tauri-apps/cli": ^1
     "@types/node": ^22.1.0
@@ -3201,10 +3234,12 @@ __metadata:
     prettier: ^3.3.3
     prettier-plugin-organize-attributes: ^1.0.0
     prettier-plugin-tailwindcss: ^0.6.5
+    radash: ^12.1.0
     react: ^18.2.0
     react-dom: ^18.2.0
     react-hook-form: ^7.52.2
     react-resizable-panels: ^2.0.22
+    simpler-state: ^1.2.1
     sonner: ^1.5.0
     tailwind-merge: ^2.4.0
     tailwindcss: ^3.4.7
@@ -3278,6 +3313,18 @@ __metadata:
   version: 4.1.0
   resolution: "signal-exit@npm:4.1.0"
   checksum: 64c757b498cb8629ffa5f75485340594d2f8189e9b08700e69199069c8e3070fb3e255f7ab873c05dc0b3cec412aea7402e10a5990cb6a050bd33ba062a6c549
+  languageName: node
+  linkType: hard
+
+"simpler-state@npm:^1.2.1":
+  version: 1.2.1
+  resolution: "simpler-state@npm:1.2.1"
+  dependencies:
+    "@babel/runtime": ^7.13.10
+    use-sync-external-store: ^1.0.0
+  peerDependencies:
+    react: ">=16.8.0"
+  checksum: dcaf0390e37fef5ac41cc74c34a2d92cc25c2ad96c6cc00a817b2d4282afea272119891b4d0defb6fcb817e2935023157d9675c4a4dc19a3d5efae0f71dd35bb
   languageName: node
   linkType: hard
 
@@ -3614,6 +3661,15 @@ __metadata:
     "@types/react":
       optional: true
   checksum: 925d1922f9853e516eaad526b6fed1be38008073067274f0ecc3f56b17bb8ab63480140dd7c271f94150027c996cea4efe83d3e3525e8f3eda22055f6a39220b
+  languageName: node
+  linkType: hard
+
+"use-sync-external-store@npm:^1.0.0":
+  version: 1.2.2
+  resolution: "use-sync-external-store@npm:1.2.2"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+  checksum: fe07c071c4da3645f112c38c0e57beb479a8838616ff4e92598256ecce527f2888c08febc7f9b2f0ce2f0e18540ba3cde41eb2035e4fafcb4f52955037098a81
   languageName: node
   linkType: hard
 

@@ -25,6 +25,13 @@ export function dbGetAllSeeds() {
 }
 
 /**
+ * 获取项。
+ */
+export function dbGetItems(filters: ItemFilters) {
+    return invoke()<ItemResult>("db_get_items", { filters })
+}
+
+/**
  * 获取设置。
  */
 export function dbGetSetting(key: string) {
@@ -38,4 +45,7 @@ export function dbSetSetting(key: string, value: string) {
     return invoke()<boolean>("db_set_setting", { key,value })
 }
 
+export type ItemResult = { items: SeedItem[]; next_cursor: string | null }
 export type Seed = { id: number; name: string; url: string; favicon: string | null; interval: number; last_fetched_at: number; last_fetch_ok: boolean }
+export type SeedItem = { id: number; seed_id: number; title: string; author: string; desc: string | null; link: string; pub_date: number | null; unread: boolean }
+export type ItemFilters = { seed_id: number | null; cursor: string | null; limit: number | null }
