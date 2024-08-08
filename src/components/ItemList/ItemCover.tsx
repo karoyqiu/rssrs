@@ -19,15 +19,7 @@ export default function ItemCover(props: ItemCoverProps) {
 
       if (srcEnd >= 0) {
         const src = desc.substring(srcStart + 5, srcEnd);
-        return (
-          <img
-            src={src}
-            crossOrigin="anonymous"
-            decoding="async"
-            loading="lazy"
-            referrerPolicy="no-referrer"
-          />
-        );
+        return <img src={src} decoding="async" loading="lazy" />;
       }
     }
   }
