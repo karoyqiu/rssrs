@@ -1,4 +1,4 @@
-use chrono::{DateTime, Duration, Local};
+use chrono::Local;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
@@ -18,19 +18,19 @@ pub struct Seed {
   pub favicon: Option<String>,
   /** 更新周期，分钟 */
   pub interval: i32,
-  /** 最近抓取时间 */
-  pub last_fetched_at: Option<DateTime<Local>>,
+  /** 最近抓取时间，UNIX Epoch */
+  pub last_fetched_at: i64,
   /** 最近抓取是否成功 */
-  pub last_fetch_ok: Option<bool>,
+  pub last_fetch_ok: bool,
 }
 
 impl Seed {
   /// 是否应该抓取
   pub fn should_fetch(&self) -> bool {
-    if let Some(last_fetched_at) = self.last_fetched_at {
+    if self.last_fetched_at > 0 {
       // 上次抓取过了，计算下次抓取时间
-      let next_fetch = last_fetched_at + Duration::minutes(self.interval.into());
-      let now = Local::now();
+      let next_fetch = self.last_fetched_at + i64::from(self.interval * 60);
+      let now = Local::now().timestamp();
 
       // 如果下次抓取时间还没到，则不该抓取
       if next_fetch > now {
@@ -41,4 +41,25 @@ impl Seed {
     // 可
     true
   }
+}
+
+pub struct SeedItem {
+  /// ID
+  pub id: i64,
+  /// GUID
+  pub guid: String,
+  /// 种子 ID
+  pub seed_id: i64,
+  /// 标题
+  pub title: String,
+  /// 作者
+  pub author: String,
+  /// 描述
+  pub desc: String,
+  /// 链接
+  pub link: String,
+  /// 发布时间，UNIX Epoch
+  pub pub_date: Option<i64>,
+  /// 是否未读
+  pub unread: bool,
 }

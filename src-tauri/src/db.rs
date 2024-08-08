@@ -1,12 +1,11 @@
 use std::path::PathBuf;
 
-use chrono::DateTime;
 use rusqlite::{Connection, OpenFlags, Result, Row};
 use tauri::{AppHandle, Manager, State};
 
 use crate::seed::Seed;
 
-const CURRENT_DB_VERSION: u32 = 2;
+const CURRENT_DB_VERSION: u32 = 3;
 
 pub struct AppState {
   pub db: std::sync::Mutex<Option<Connection>>,
@@ -88,6 +87,18 @@ fn upgrade_if_needed(db: &mut Connection, existing_version: u32) -> Result<()> {
         last_fetched_at INTEGER,
         last_fetch_ok INTEGER
       );
+      CREATE TABLE IF NOT EXISTS items (
+        id INTEGER PRIMARY KEY,
+        seed_id INTEGER REFERENCES seeds (id) ON DELETE CASCADE ON UPDATE CASCADE,
+        guid TEXT NOT NULL UNIQUE,
+        title TEXT,
+        author TEXT,
+        desc TEXT,
+        link TEXT,
+        pub_date INTEGER,
+        unread INTEGER
+      );
+      CREATE INDEX IF NOT EXISTS items_pub_date ON items (pub_date DESC);
       CREATE TABLE IF NOT EXISTS settings (
         key TEXT PRIMARY KEY,
         value TEXT NOT NULL
@@ -116,19 +127,13 @@ pub async fn db_insert_seed(app_handle: AppHandle, name: String, url: String) ->
 
 /// 将行转换为 Seed
 fn to_seed(row: &Row) -> Result<Seed> {
-  let ts: Option<i64> = row.get("last_fetched_at")?;
-
   Ok(Seed {
     id: row.get("id")?,
     name: row.get("name")?,
     url: row.get("url")?,
     favicon: row.get("favicon")?,
     interval: row.get("interval")?,
-    last_fetched_at: if let Some(ts) = ts {
-      Some(DateTime::from(DateTime::from_timestamp(ts, 0).unwrap()))
-    } else {
-      None
-    },
+    last_fetched_at: row.get("last_fetched_at")?,
     last_fetch_ok: row.get("last_fetch_ok")?,
   })
 }
