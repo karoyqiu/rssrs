@@ -62,7 +62,7 @@ pub struct SeedItem {
   /// 链接
   pub link: String,
   /// 发布时间，UNIX Epoch
-  pub pub_date: Option<i64>,
+  pub pub_date: i64,
   /// 是否未读
   pub unread: bool,
 }

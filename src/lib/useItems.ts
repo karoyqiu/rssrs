@@ -1,5 +1,5 @@
 import { unique } from 'radash';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { dbGetItems, SeedItem } from './bindings';
 
 const useItems = () => {
@@ -8,7 +8,10 @@ const useItems = () => {
   const [more, setMore] = useState(true);
 
   const loadMore = useCallback(async () => {
+    console.debug('Loading', cursor);
     const result = await dbGetItems({ seed_id: null, limit: null, cursor });
+    console.debug('Loaded', result);
+
     setItems((old) =>
       unique([...old, ...result.items], (item) => item.id).sort((a, b) => {
         let diff = (b.pub_date ?? 0) - (a.pub_date ?? 0);
@@ -23,10 +26,6 @@ const useItems = () => {
     setCursor(result.next_cursor);
     setMore(!!result.next_cursor);
   }, [cursor]);
-
-  useEffect(() => {
-    loadMore();
-  }, []);
 
   return { items, more, loadMore };
 };

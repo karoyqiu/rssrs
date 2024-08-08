@@ -60,23 +60,19 @@ fn insert_items(config: &Config, seed_id: i64, items: &Vec<Item>) -> Result<()> 
       None
     };
 
-    let pub_date = if let Some(date) = &item.pub_date {
+    if let Some(date) = &item.pub_date {
       let date = DateTime::parse_from_rfc2822(date.as_str())?;
-      Some(date.timestamp())
-    } else {
-      None
+      stmt.execute(params![
+        seed_id,
+        guid,
+        item.title,
+        item.author,
+        item.description,
+        item.link,
+        date,
+        true,
+      ])?;
     };
-
-    stmt.execute(params![
-      seed_id,
-      guid,
-      item.title,
-      item.author,
-      item.description,
-      item.link,
-      pub_date,
-      true,
-    ])?;
   }
 
   Ok(())

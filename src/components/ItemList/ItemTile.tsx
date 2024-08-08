@@ -20,11 +20,9 @@ export default function ItemTile(props: ItemTileProps) {
       <div className="flex w-full flex-col gap-px p-2 text-start">
         <span className="w-full">{item.title}</span>
         <span className="w-full text-sm text-muted-foreground">{item.seed_name}</span>
-        {item.pub_date && (
-          <span className="w-full text-sm text-muted-foreground">
-            {new Date(item.pub_date * 1000).toLocaleString()}
-          </span>
-        )}
+        <span className="w-full text-sm text-muted-foreground">
+          {new Date(item.pub_date * 1000).toLocaleString()}
+        </span>
       </div>
     </button>
   );

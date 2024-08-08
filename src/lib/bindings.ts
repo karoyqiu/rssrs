@@ -48,7 +48,7 @@ export function dbSetSetting(key: string, value: string) {
 /**
  * 种子项
  */
-export type SeedItem = { id: number; seed_id: number; seed_name: string; title: string; author: string; desc: string | null; link: string; pub_date: number | null; unread: boolean }
+export type SeedItem = { id: number; seed_id: number; seed_name: string; title: string; author: string; desc: string | null; link: string; pub_date: number; unread: boolean }
 export type ItemResult = { items: SeedItem[]; next_cursor: string | null }
 export type ItemFilters = { seed_id: number | null; cursor: string | null; limit: number | null }
 /**

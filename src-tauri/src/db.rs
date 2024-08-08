@@ -184,7 +184,7 @@ pub struct ItemResult {
 #[specta::specta]
 pub async fn db_get_items(app_handle: AppHandle, filters: ItemFilters) -> ItemResult {
   let result = app_handle.db(move |db| -> Result<ItemResult> {
-    let sql = String::from("SELECT items.*, seeds.name FROM items LEFT JOIN seeds ON items.seed_id = seeds.id WHERE pub_date <= ?1 AND items.id >= ?2 ORDER BY pub_date DESC, items.id ASC LIMIT ?3");
+    let sql = String::from("SELECT items.*, seeds.name FROM items LEFT JOIN seeds ON items.seed_id = seeds.id WHERE pub_date < ?1 OR (pub_date = ?1 AND items.id >= ?2) ORDER BY pub_date DESC, items.id ASC LIMIT ?3");
     let mut pub_date = i64::MAX;
     let mut id = 0i64;
     let limit = filters.limit.unwrap_or(20);
@@ -216,7 +216,7 @@ pub async fn db_get_items(app_handle: AppHandle, filters: ItemFilters) -> ItemRe
 
     let next_cursor = if items.len() > limit {
       let last = items.pop().unwrap();
-      Some(format!("{}:{}", last.pub_date.unwrap_or(0), last.id))
+      Some(format!("{}:{}", last.pub_date, last.id))
     } else {
       None
     };
