@@ -2,6 +2,7 @@ use chrono::Local;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
+/// 种子
 #[derive(Debug, Deserialize, Serialize, Type)]
 pub struct Seed {
   /// ID
@@ -43,12 +44,15 @@ impl Seed {
   }
 }
 
+/// 种子项
 #[derive(Debug, Deserialize, Serialize, Type)]
 pub struct SeedItem {
   /// ID
   pub id: i64,
   /// 种子 ID
   pub seed_id: i64,
+  /// 种子名称
+  pub seed_name: String,
   /// 标题
   pub title: String,
   /// 作者

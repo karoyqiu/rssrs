@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { dbGetAllSeeds, Seed } from './bindings';
 
-const useSeeds = (): [Seed[], () => void] => {
+const useSeeds = () => {
   const [seeds, setSeeds] = useState<Seed[]>([]);
 
   const refresh = useCallback(() => {
@@ -12,7 +12,7 @@ const useSeeds = (): [Seed[], () => void] => {
     refresh();
   }, []);
 
-  return [seeds, refresh];
+  return { seeds, refresh };
 };
 
 export default useSeeds;

@@ -14,7 +14,7 @@ import '@/globals.css';
 import ItemList from './components/ItemList';
 
 function App() {
-  const [seeds] = useSeeds();
+  const { seeds } = useSeeds();
 
   useEffect(() => {
     appWindow.show();
@@ -55,7 +55,7 @@ function App() {
       </ResizablePanel>
       <ResizableHandle />
       <ResizablePanel minSize={50}>
-        <ScrollArea className="@container h-full w-full">
+        <ScrollArea className="h-full w-full @container">
           <ItemList />
         </ScrollArea>
       </ResizablePanel>
