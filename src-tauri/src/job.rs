@@ -1,5 +1,6 @@
 use anyhow::Result;
 use chrono::{DateTime, Local};
+use log::info;
 use reqwest::Proxy;
 use rss::{Channel, Item};
 use rusqlite::{params, Connection};
@@ -80,7 +81,7 @@ fn insert_items(config: &Config, seed_id: i64, items: &Vec<Item>) -> Result<()> 
 }
 
 async fn fetch(config: &Config, proxy: &ProxySettings, seed: &Seed) -> Result<()> {
-  println!("Fetching {}", &seed.name);
+  info!("Fetching {}", &seed.name);
   let mut client = reqwest::Client::builder();
 
   match proxy.t.as_str() {
@@ -98,7 +99,7 @@ async fn fetch(config: &Config, proxy: &ProxySettings, seed: &Seed) -> Result<()
   let channel = Channel::read_from(&content[..])?;
   insert_items(config, seed.id, &channel.items)?;
 
-  println!("Fetched {}", &seed.name);
+  info!("Fetched {}", &seed.name);
   Ok(())
 }
 

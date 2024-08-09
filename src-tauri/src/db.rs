@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use log::info;
 use rusqlite::{params, Connection, OpenFlags, Result, Row};
 use serde::{Deserialize, Serialize};
 use specta::Type;
@@ -220,7 +221,7 @@ fn to_seed_item(row: &Row) -> Result<SeedItem> {
 }
 
 fn get_seed_item(db: &Connection, id: i64) -> Result<SeedItem> {
-  let mut stmt = db.prepare("SELECT * FROM items WHERE id = ?1")?;
+  let mut stmt = db.prepare("SELECT items.*, seeds.name FROM items LEFT JOIN seeds ON items.seed_id = seeds.id WHERE items.id = ?1")?;
   let mut rows = stmt.query([id])?;
   let row = rows.next()?;
   let row = row.unwrap();
@@ -291,6 +292,8 @@ pub async fn db_get_items(app_handle: AppHandle, filters: ItemFilters) -> ItemRe
 #[tauri::command]
 #[specta::specta]
 pub async fn db_mark_item_read(app_handle: AppHandle, item_id: i64, unread: bool) -> bool {
+  info!("Mark as read: {item_id}, {unread}");
+
   let result = app_handle.db(|db| -> Result<()> {
     let mut stmt = db.prepare("UPDATE items SET unread = ?2 WHERE id = ?1")?;
     stmt.execute(params![item_id, unread])?;
@@ -322,7 +325,9 @@ pub async fn db_mark_item_read(app_handle: AppHandle, item_id: i64, unread: bool
     Ok(())
   });
 
-  if result.is_ok() {
+  let ok = result.is_ok();
+
+  if ok {
     // ! 为了图省事，全都 unwrap 了。
     // 上报项已读事件
     app_handle
@@ -334,9 +339,11 @@ pub async fn db_mark_item_read(app_handle: AppHandle, item_id: i64, unread: bool
         },
       )
       .unwrap();
+  } else {
+    result.unwrap();
   }
 
-  result.is_ok()
+  ok
 }
 
 /// 获取设置。

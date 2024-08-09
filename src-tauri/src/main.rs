@@ -50,6 +50,8 @@ fn main() {
   #[cfg(debug_assertions)]
   export_bindings();
 
+  env_logger::init();
+
   let ctx = tauri::generate_context!();
   let config = ctx.config().clone();
 

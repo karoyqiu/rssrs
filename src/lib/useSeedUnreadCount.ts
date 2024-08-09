@@ -20,7 +20,7 @@ const useSeedUnreadCount = (seedId: Seed['id'] | null) => {
     [seedId, setUnread],
   );
 
-  useEvent('app://item/unread', handler);
+  useEvent('app://seed/unread', handler);
 
   return unread;
 };
