@@ -24,6 +24,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import useSetting from '@/lib/useSettings';
+import { useEffect } from 'react';
 
 const proxySchema = z
   .object({
@@ -64,6 +65,10 @@ export default function ProxySettingsCard() {
   });
   const values = form.watch();
 
+  useEffect(() => {
+    form.reset(proxy);
+  }, [proxy]);
+
   return (
     <Form {...form}>
       <form
@@ -89,7 +94,7 @@ export default function ProxySettingsCard() {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <RadioGroup defaultValue={field.value} onValueChange={field.onChange}>
+                    <RadioGroup value={field.value} onValueChange={field.onChange}>
                       <FormItem className="flex items-center gap-2 space-y-0">
                         <FormControl>
                           <RadioGroupItem className="peer" value="none" />
