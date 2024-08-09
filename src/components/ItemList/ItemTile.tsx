@@ -24,6 +24,7 @@ export default function ItemTile(props: ItemTileProps) {
 
   const openLink = async () => {
     await open(item.link);
+    await dbMarkItemRead(item.id, false);
   };
 
   return (
