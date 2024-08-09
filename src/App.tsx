@@ -1,17 +1,18 @@
 import { appWindow } from '@tauri-apps/api/window';
-import { ListIcon, PlusIcon, SettingsIcon } from 'lucide-react';
+import { PlusIcon, SettingsIcon } from 'lucide-react';
 import { useEffect } from 'react';
 
 import AddSeedDialog from '@/components/AddSeedDialog';
+import ItemList from '@/components/ItemList';
+import SeedToggleItem from '@/components/SeedToggleItem';
 import SettingsDialog from '@/components/SettingsDialog';
 import { Button } from '@/components/ui/button';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { ToggleGroup } from '@/components/ui/toggle-group';
 import useSeeds from '@/lib/useSeeds';
 
 import '@/globals.css';
-import ItemList from './components/ItemList';
 
 function App() {
   const { seeds } = useSeeds();
@@ -34,14 +35,9 @@ function App() {
           </div>
           <ScrollArea className="grow">
             <ToggleGroup className="mt-2" type="single" orientation="vertical">
-              <ToggleGroupItem className="justify-start" value="*">
-                <ListIcon />
-                All
-              </ToggleGroupItem>
+              <SeedToggleItem seed={null} />
               {seeds.map((seed) => (
-                <ToggleGroupItem className="justify-start" key={seed.id} value={seed.id.toString()}>
-                  {seed.name}
-                </ToggleGroupItem>
+                <SeedToggleItem key={seed.id} seed={seed} />
               ))}
             </ToggleGroup>
           </ScrollArea>

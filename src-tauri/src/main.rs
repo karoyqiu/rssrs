@@ -6,26 +6,37 @@ mod job;
 mod seed;
 
 use db::{
-  db_get_all_seeds, db_get_items, db_get_setting, db_insert_seed, db_set_setting, initialize,
-  AppState,
+  db_get_all_seeds, db_get_items, db_get_setting, db_get_unread_count, db_insert_seed,
+  db_mark_item_read, db_set_setting, initialize, AppState,
 };
 use job::check_seeds;
+use seed::{SeedItemReadEvent, SeedUnreadCountEvent};
 use specta::{collect_types, ts::BigIntExportBehavior};
 use tauri::{async_runtime::spawn, Manager, State};
 use tauri_specta::ts;
 use tokio_schedule::{every, Job};
 
-fn main() {
-  #[cfg(debug_assertions)]
-  let config = specta::ts::ExportConfiguration::new().bigint(BigIntExportBehavior::Number);
+#[cfg(debug_assertions)]
+fn export_bindings() {
+  let config = specta::ts::ExportConfiguration::new().bigint(BigIntExportBehavior::String);
 
-  #[cfg(debug_assertions)]
+  println!(
+    "{}",
+    specta::ts::export::<SeedItemReadEvent>(&config).unwrap()
+  );
+  println!(
+    "{}",
+    specta::ts::export::<SeedUnreadCountEvent>(&config).unwrap()
+  );
+
   ts::export_with_cfg(
     collect_types![
-      db_insert_seed,
       db_get_all_seeds,
       db_get_items,
       db_get_setting,
+      db_get_unread_count,
+      db_insert_seed,
+      db_mark_item_read,
       db_set_setting
     ]
     .unwrap(),
@@ -33,6 +44,11 @@ fn main() {
     "../src/lib/bindings.ts",
   )
   .unwrap();
+}
+
+fn main() {
+  #[cfg(debug_assertions)]
+  export_bindings();
 
   let ctx = tauri::generate_context!();
   let config = ctx.config().clone();
@@ -60,10 +76,12 @@ fn main() {
       db: Default::default(),
     })
     .invoke_handler(tauri::generate_handler![
-      db_insert_seed,
       db_get_all_seeds,
       db_get_items,
       db_get_setting,
+      db_get_unread_count,
+      db_insert_seed,
+      db_mark_item_read,
       db_set_setting
     ])
     .setup(|app| {

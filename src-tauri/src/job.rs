@@ -62,6 +62,7 @@ fn insert_items(config: &Config, seed_id: i64, items: &Vec<Item>) -> Result<()> 
 
     if let Some(date) = &item.pub_date {
       let date = DateTime::parse_from_rfc2822(date.as_str())?;
+      let date = date.timestamp();
       stmt.execute(params![
         seed_id,
         guid,

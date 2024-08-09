@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::{AppHandle, Manager, State};
 
-use crate::seed::{Seed, SeedItem};
+use crate::seed::{Seed, SeedItem, SeedItemReadEvent, SeedUnreadCountEvent};
 
 const CURRENT_DB_VERSION: u32 = 3;
 
@@ -91,13 +91,13 @@ fn upgrade_if_needed(db: &mut Connection, existing_version: u32) -> Result<()> {
       );
       CREATE TABLE IF NOT EXISTS items (
         id INTEGER PRIMARY KEY,
-        seed_id INTEGER REFERENCES seeds (id) ON DELETE CASCADE ON UPDATE CASCADE,
+        seed_id INTEGER NOT NULL REFERENCES seeds (id) ON DELETE CASCADE ON UPDATE CASCADE,
         guid TEXT NOT NULL UNIQUE,
         title TEXT,
         author TEXT,
         desc TEXT,
         link TEXT,
-        pub_date INTEGER,
+        pub_date INTEGER NOT NULL,
         unread INTEGER
       );
       CREATE INDEX IF NOT EXISTS items_pub_date ON items (pub_date DESC);
@@ -166,6 +166,67 @@ pub async fn db_get_all_seeds(app_handle: AppHandle) -> Vec<Seed> {
   }
 }
 
+fn get_unread_count(db: &Connection, seed_id: Option<i64>) -> Result<i32> {
+  let (sql, params) = if let Some(seed_id) = seed_id {
+    (
+      "SELECT COUNT(*) FROM items WHERE seed_id = ?1 AND unread != 0",
+      [seed_id],
+    )
+  } else {
+    (
+      "SELECT COUNT(*) FROM items WHERE seed_id != ?1 AND unread != 0",
+      [0],
+    )
+  };
+
+  let mut stmt = db.prepare(sql)?;
+  let mut rows = stmt.query(params)?;
+
+  if let Some(row) = rows.next()? {
+    Ok(row.get(0)?)
+  } else {
+    Ok(0)
+  }
+}
+
+/// 获取未读数量。
+#[tauri::command]
+#[specta::specta]
+pub async fn db_get_unread_count(app_handle: AppHandle, seed_id: Option<i64>) -> i32 {
+  let result = app_handle.db(|db| -> Result<i32> { get_unread_count(db, seed_id) });
+
+  result.unwrap()
+
+  // if let Ok(result) = result {
+  //   result
+  // } else {
+  //   Ok(0)
+  // }
+}
+
+/// 将行转换为 Seed
+fn to_seed_item(row: &Row) -> Result<SeedItem> {
+  Ok(SeedItem {
+    id: row.get("id")?,
+    seed_id: row.get("seed_id")?,
+    seed_name: row.get("name")?,
+    title: row.get("title")?,
+    author: row.get("author")?,
+    desc: row.get("desc")?,
+    link: row.get("link")?,
+    pub_date: row.get("pub_date")?,
+    unread: row.get("unread")?,
+  })
+}
+
+fn get_seed_item(db: &Connection, id: i64) -> Result<SeedItem> {
+  let mut stmt = db.prepare("SELECT * FROM items WHERE id = ?1")?;
+  let mut rows = stmt.query([id])?;
+  let row = rows.next()?;
+  let row = row.unwrap();
+  to_seed_item(row)
+}
+
 #[derive(Debug, Deserialize, Serialize, Type)]
 pub struct ItemFilters {
   pub seed_id: Option<i64>,
@@ -184,7 +245,7 @@ pub struct ItemResult {
 #[specta::specta]
 pub async fn db_get_items(app_handle: AppHandle, filters: ItemFilters) -> ItemResult {
   let result = app_handle.db(move |db| -> Result<ItemResult> {
-    let sql = String::from("SELECT items.*, seeds.name FROM items LEFT JOIN seeds ON items.seed_id = seeds.id WHERE pub_date < ?1 OR (pub_date = ?1 AND items.id >= ?2) ORDER BY pub_date DESC, items.id ASC LIMIT ?3");
+    let sql = String::from("SELECT items.*, seeds.name FROM items LEFT JOIN seeds ON items.seed_id = seeds.id WHERE unread != 0 AND (pub_date < ?1 OR (pub_date = ?1 AND items.id >= ?2)) ORDER BY pub_date DESC, items.id ASC LIMIT ?3");
     let mut pub_date = i64::MAX;
     let mut id = 0i64;
     let limit = filters.limit.unwrap_or(20);
@@ -201,17 +262,7 @@ pub async fn db_get_items(app_handle: AppHandle, filters: ItemFilters) -> ItemRe
     let mut items = Vec::new();
 
     while let Some(row) = rows.next()? {
-      items.push(SeedItem {
-        id: row.get("id")?,
-        seed_id: row.get("seed_id")?,
-        seed_name: row.get("name")?,
-        title: row.get("title")?,
-        author: row.get("author")?,
-        desc: row.get("desc")?,
-        link: row.get("link")?,
-        pub_date: row.get("pub_date")?,
-        unread: row.get("unread")?,
-      });
+      items.push(to_seed_item(row)?);
     }
 
     let next_cursor = if items.len() > limit {
@@ -225,6 +276,7 @@ pub async fn db_get_items(app_handle: AppHandle, filters: ItemFilters) -> ItemRe
   });
 
   result.unwrap()
+
   // if let Ok(result) = result {
   //   result
   // } else {
@@ -233,6 +285,58 @@ pub async fn db_get_items(app_handle: AppHandle, filters: ItemFilters) -> ItemRe
   //     next_cursor: None,
   //   }
   // }
+}
+
+/// 将项标记为已读或未读。
+#[tauri::command]
+#[specta::specta]
+pub async fn db_mark_item_read(app_handle: AppHandle, item_id: i64, unread: bool) -> bool {
+  let result = app_handle.db(|db| -> Result<()> {
+    let mut stmt = db.prepare("UPDATE items SET unread = ?2 WHERE id = ?1")?;
+    stmt.execute(params![item_id, unread])?;
+
+    // 上报种子未读数量事件
+    let item = get_seed_item(db, item_id)?;
+    let unread_count = get_unread_count(db, Some(item.seed_id))?;
+    app_handle
+      .emit_all(
+        "app://seed/unread",
+        SeedUnreadCountEvent {
+          id: Some(item.seed_id),
+          unread_count,
+        },
+      )
+      .unwrap();
+
+    let unread_count = get_unread_count(db, None)?;
+    app_handle
+      .emit_all(
+        "app://seed/unread",
+        SeedUnreadCountEvent {
+          id: None,
+          unread_count,
+        },
+      )
+      .unwrap();
+
+    Ok(())
+  });
+
+  if result.is_ok() {
+    // ! 为了图省事，全都 unwrap 了。
+    // 上报项已读事件
+    app_handle
+      .emit_all(
+        "app://item/unread",
+        SeedItemReadEvent {
+          id: item_id,
+          unread,
+        },
+      )
+      .unwrap();
+  }
+
+  result.is_ok()
 }
 
 /// 获取设置。

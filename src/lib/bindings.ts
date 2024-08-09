@@ -11,13 +11,6 @@ declare global {
 const invoke = () => window.__TAURI_INVOKE__;
 
 /**
- * 插入种子。
- */
-export function dbInsertSeed(name: string, url: string) {
-    return invoke()<boolean>("db_insert_seed", { name,url })
-}
-
-/**
  * 获取所有种子。
  */
 export function dbGetAllSeeds() {
@@ -39,6 +32,27 @@ export function dbGetSetting(key: string) {
 }
 
 /**
+ * 获取未读数量。
+ */
+export function dbGetUnreadCount(seedId: string | null) {
+    return invoke()<number>("db_get_unread_count", { seedId })
+}
+
+/**
+ * 插入种子。
+ */
+export function dbInsertSeed(name: string, url: string) {
+    return invoke()<boolean>("db_insert_seed", { name,url })
+}
+
+/**
+ * 将项标记为已读或未读。
+ */
+export function dbMarkItemRead(itemId: string, unread: boolean) {
+    return invoke()<boolean>("db_mark_item_read", { itemId,unread })
+}
+
+/**
  * 修改设置。
  */
 export function dbSetSetting(key: string, value: string) {
@@ -48,10 +62,10 @@ export function dbSetSetting(key: string, value: string) {
 /**
  * 种子项
  */
-export type SeedItem = { id: number; seed_id: number; seed_name: string; title: string; author: string; desc: string | null; link: string; pub_date: number; unread: boolean }
+export type SeedItem = { id: string; seed_id: string; seed_name: string; title: string; author: string; desc: string | null; link: string; pub_date: string; unread: boolean }
 export type ItemResult = { items: SeedItem[]; next_cursor: string | null }
-export type ItemFilters = { seed_id: number | null; cursor: string | null; limit: number | null }
+export type ItemFilters = { seed_id: string | null; cursor: string | null; limit: string | null }
 /**
  * 种子
  */
-export type Seed = { id: number; name: string; url: string; favicon: string | null; interval: number; last_fetched_at: number; last_fetch_ok: boolean }
+export type Seed = { id: string; name: string; url: string; favicon: string | null; interval: number; last_fetched_at: string; last_fetch_ok: boolean }
