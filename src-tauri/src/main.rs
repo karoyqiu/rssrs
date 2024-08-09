@@ -1,11 +1,13 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod app_handle;
 mod db;
 mod events;
 mod job;
 mod seed;
 
+use app_handle::set_app_handle;
 use db::{
   db_get_all_seeds, db_get_items, db_get_setting, db_get_unread_count, db_insert_seed,
   db_mark_item_read, db_set_setting, initialize, AppState,
@@ -89,6 +91,8 @@ fn main() {
     ])
     .setup(|app| {
       let handle = app.handle();
+      set_app_handle(&handle);
+
       let app_dir = handle.path_resolver().app_data_dir();
       let state: State<AppState> = handle.state();
       let db = initialize(app_dir, false).expect("Failed to initialize database");

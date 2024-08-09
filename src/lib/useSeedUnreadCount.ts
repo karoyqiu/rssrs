@@ -11,7 +11,7 @@ const useSeedUnreadCount = (seedId: Seed['id'] | null) => {
     dbGetUnreadCount(seedId).then(setUnread);
   }, [seedId]);
 
-  const handler = useCallback(
+  const unreadHandler = useCallback(
     ({ payload }: Event<SeedUnreadCountEvent>) => {
       if (payload.id === seedId) {
         setUnread(payload.unreadCount);
@@ -19,8 +19,17 @@ const useSeedUnreadCount = (seedId: Seed['id'] | null) => {
     },
     [seedId, setUnread],
   );
+  const newHandler = useCallback(
+    ({ payload }: Event<SeedUnreadCountEvent>) => {
+      if (payload.id === seedId) {
+        setUnread((old) => old + payload.unreadCount);
+      }
+    },
+    [seedId, setUnread],
+  );
 
-  useEvent('app://seed/unread', handler);
+  useEvent('app://seed/unread', unreadHandler);
+  useEvent('app://seed/new', newHandler);
 
   return unread;
 };

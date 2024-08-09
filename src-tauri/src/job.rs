@@ -5,10 +5,12 @@ use reqwest::Proxy;
 use rss::{Channel, Item};
 use rusqlite::{params, Connection};
 use serde::Deserialize;
-use tauri::{api::path::app_data_dir, Config};
+use tauri::{api::path::app_data_dir, Config, Manager};
 
 use crate::{
+  app_handle::get_app_handle,
   db::{get_all_seeds, initialize},
+  events::SeedUnreadCountEvent,
   seed::Seed,
 };
 
@@ -53,6 +55,7 @@ fn insert_items(config: &Config, seed_id: i64, items: &Vec<Item>) -> Result<()> 
   let app_dir = app_data_dir(config);
   let db = initialize(app_dir, false)?;
   let mut stmt = db.prepare("INSERT OR IGNORE INTO items (seed_id, guid, title, author, desc, link, pub_date, unread) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)")?;
+  let mut total = 0;
 
   for item in items {
     let guid = if let Some(guid) = &item.guid {
@@ -64,7 +67,7 @@ fn insert_items(config: &Config, seed_id: i64, items: &Vec<Item>) -> Result<()> 
     if let Some(date) = &item.pub_date {
       let date = DateTime::parse_from_rfc2822(date.as_str())?;
       let date = date.timestamp();
-      stmt.execute(params![
+      let inserted = stmt.execute(params![
         seed_id,
         guid,
         item.title,
@@ -74,7 +77,22 @@ fn insert_items(config: &Config, seed_id: i64, items: &Vec<Item>) -> Result<()> 
         date,
         true,
       ])?;
+      total += inserted;
     };
+  }
+
+  if total > 0 {
+    if let Some(app) = get_app_handle() {
+      app
+        .emit_all(
+          "app://seed/new",
+          SeedUnreadCountEvent {
+            id: Some(seed_id),
+            unread_count: total as i32,
+          },
+        )
+        .unwrap();
+    }
   }
 
   Ok(())
