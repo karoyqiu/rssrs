@@ -2,7 +2,7 @@ import { dbMarkItemRead, type SeedItem } from '@/lib/bindings';
 import { cn } from '@/lib/utils';
 import { open } from '@tauri-apps/api/shell';
 import { MailIcon, MailOpenIcon } from 'lucide-react';
-import { useIntersectionObserver } from 'usehooks-ts';
+import { useIntersectionObserver, useReadLocalStorage } from 'usehooks-ts';
 import ItemCover from './ItemCover';
 
 type ItemTileProps = {
@@ -11,11 +11,12 @@ type ItemTileProps = {
 
 export default function ItemTile(props: ItemTileProps) {
   const { item } = props;
+  const autoRead = useReadLocalStorage<boolean>('autoRead') ?? true;
   const { ref } = useIntersectionObserver({
     threshold: 0,
     initialIsIntersecting: true,
     onChange: (isIntersecting, entry) => {
-      if (item.unread && !isIntersecting && entry.boundingClientRect.top < 0) {
+      if (autoRead && item.unread && !isIntersecting && entry.boundingClientRect.top < 0) {
         dbMarkItemRead(item.id, false);
       }
     },

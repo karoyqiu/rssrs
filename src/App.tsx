@@ -1,6 +1,7 @@
 import { appWindow } from '@tauri-apps/api/window';
 import { PlusIcon, SettingsIcon } from 'lucide-react';
 import { useEffect } from 'react';
+import { useLocalStorage } from 'usehooks-ts';
 
 import AddSeedDialog from '@/components/AddSeedDialog';
 import ItemList from '@/components/ItemList';
@@ -9,12 +10,14 @@ import SettingsDialog from '@/components/SettingsDialog';
 import { Button } from '@/components/ui/button';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Toggle } from '@/components/ui/toggle';
 import { ToggleGroup } from '@/components/ui/toggle-group';
 import useSeeds from '@/lib/useSeeds';
 
 import '@/globals.css';
 
 function App() {
+  const [autoRead, setAutoRead] = useLocalStorage('autoRead', true);
   const { seeds } = useSeeds();
 
   useEffect(() => {
@@ -51,6 +54,11 @@ function App() {
       </ResizablePanel>
       <ResizableHandle />
       <ResizablePanel minSize={50}>
+        <div className="flex gap-2 border-b p-1">
+          <Toggle pressed={autoRead} onPressedChange={setAutoRead}>
+            Auto read
+          </Toggle>
+        </div>
         <ScrollArea className="h-full w-full @container">
           <ItemList />
         </ScrollArea>
