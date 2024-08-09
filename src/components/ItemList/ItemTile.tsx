@@ -1,8 +1,9 @@
-import { dbMarkItemRead, type SeedItem } from '@/lib/bindings';
-import { cn } from '@/lib/utils';
 import { open } from '@tauri-apps/api/shell';
 import { MailIcon, MailOpenIcon } from 'lucide-react';
 import { useIntersectionObserver, useReadLocalStorage } from 'usehooks-ts';
+
+import { dbMarkItemRead, type SeedItem } from '@/lib/bindings';
+import { cn } from '@/lib/utils';
 import ItemCover from './ItemCover';
 
 type ItemTileProps = {
@@ -33,7 +34,10 @@ export default function ItemTile(props: ItemTileProps) {
       className="flex h-[24rem] w-full flex-col overflow-hidden rounded border"
       data-test={item.id}
     >
-      <div className="grow cursor-pointer overflow-hidden" onClick={openLink}>
+      <div
+        className="flex grow cursor-pointer flex-col items-center overflow-hidden"
+        onClick={openLink}
+      >
         <ItemCover desc={item.desc} />
       </div>
       <div className="flex w-full flex-col gap-px p-2 text-start">

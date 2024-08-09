@@ -15,19 +15,20 @@ export default function ItemCover(props: ItemCoverProps) {
     imgStart = desc.indexOf('<img ', imgStart);
 
     if (imgStart >= 0) {
-      let imgEnd = desc.indexOf('>', imgStart);
+      const imgEnd = desc.indexOf('>', imgStart);
 
       // 将带 data-link 的视为广告
-      let dataLink = desc.indexOf('data-link', imgStart);
+      const dataLink = desc.indexOf('data-link', imgStart);
 
-      if (dataLink < 0 || dataLink > imgEnd) {
-        const srcStart = desc.indexOf('src="', imgStart);
+      const srcStart = desc.indexOf('src="', imgStart);
 
-        if (srcStart >= 0) {
-          const srcEnd = desc.indexOf('"', srcStart + 5);
+      if (srcStart >= 0) {
+        const srcEnd = desc.indexOf('"', srcStart + 5);
 
-          if (srcEnd >= 0) {
-            const src = desc.substring(srcStart + 5, srcEnd);
+        if (srcEnd >= 0) {
+          const src = desc.substring(srcStart + 5, srcEnd);
+
+          if (dataLink < 0 || dataLink > imgEnd || !src.endsWith('.gif')) {
             return <img src={src} decoding="async" loading="lazy" />;
           }
         }
