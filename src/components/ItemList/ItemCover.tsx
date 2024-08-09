@@ -9,27 +9,31 @@ export default function ItemCover(props: ItemCoverProps) {
     return null;
   }
 
-  let img = 0;
+  let imgStart = 0;
 
-  while (img >= 0) {
-    img = desc.indexOf('<img ', img);
+  while (imgStart >= 0) {
+    imgStart = desc.indexOf('<img ', imgStart);
 
-    if (img >= 0) {
-      const srcStart = desc.indexOf('src="', img);
+    if (imgStart >= 0) {
+      let imgEnd = desc.indexOf('>', imgStart);
 
-      if (srcStart >= 0) {
-        const srcEnd = desc.indexOf('"', srcStart + 5);
+      // 将带 data-link 的视为广告
+      let dataLink = desc.indexOf('data-link', imgStart);
 
-        if (srcEnd >= 0) {
-          const src = desc.substring(srcStart + 5, srcEnd);
+      if (dataLink < 0 || dataLink > imgEnd) {
+        const srcStart = desc.indexOf('src="', imgStart);
 
-          if (src.endsWith('.gif')) {
-            img = srcEnd;
-          } else {
+        if (srcStart >= 0) {
+          const srcEnd = desc.indexOf('"', srcStart + 5);
+
+          if (srcEnd >= 0) {
+            const src = desc.substring(srcStart + 5, srcEnd);
             return <img src={src} decoding="async" loading="lazy" />;
           }
         }
       }
+
+      imgStart = imgEnd;
     }
   }
 
