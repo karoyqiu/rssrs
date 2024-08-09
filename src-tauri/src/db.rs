@@ -233,6 +233,7 @@ fn get_seed_item(db: &Connection, id: i64) -> Result<SeedItem> {
 }
 
 #[derive(Debug, Deserialize, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
 pub struct ItemFilters {
   pub seed_id: Option<i64>,
   pub cursor: Option<String>,
@@ -240,6 +241,7 @@ pub struct ItemFilters {
 }
 
 #[derive(Debug, Deserialize, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
 pub struct ItemResult {
   items: Vec<SeedItem>,
   next_cursor: Option<String>,
@@ -250,10 +252,15 @@ pub struct ItemResult {
 #[specta::specta]
 pub async fn db_get_items(app_handle: AppHandle, filters: ItemFilters) -> ItemResult {
   let result = app_handle.db(move |db| -> Result<ItemResult> {
-    let sql = String::from("SELECT items.*, seeds.name FROM items LEFT JOIN seeds ON items.seed_id = seeds.id WHERE unread != 0 AND (pub_date < ?1 OR (pub_date = ?1 AND items.id >= ?2)) ORDER BY pub_date DESC, items.id ASC LIMIT ?3");
+    let sql = if filters.seed_id.is_some() {
+      "SELECT items.*, seeds.name FROM items LEFT JOIN seeds ON items.seed_id = seeds.id WHERE seed_id = ?4 AND unread != 0 AND (pub_date < ?1 OR (pub_date = ?1 AND items.id >= ?2)) ORDER BY pub_date DESC, items.id ASC LIMIT ?3"
+    } else {
+      "SELECT items.*, seeds.name FROM items LEFT JOIN seeds ON items.seed_id = seeds.id WHERE seed_id != ?4 AND unread != 0 AND (pub_date < ?1 OR (pub_date = ?1 AND items.id >= ?2)) ORDER BY pub_date DESC, items.id ASC LIMIT ?3"
+    };
     let mut pub_date = i64::MAX;
     let mut id = 0i64;
     let limit = filters.limit.unwrap_or(20);
+    let seed_id = filters.seed_id.unwrap_or(0);
 
     if let Some(cursor) = filters.cursor {
       // cursor 格式：pub_date:id
@@ -263,7 +270,7 @@ pub async fn db_get_items(app_handle: AppHandle, filters: ItemFilters) -> ItemRe
     }
 
     let mut stmt = db.prepare(&sql)?;
-    let mut rows = stmt.query(params![pub_date, id, limit + 1])?;
+    let mut rows = stmt.query(params![pub_date, id, limit + 1, seed_id])?;
     let mut items = Vec::new();
 
     while let Some(row) = rows.next()? {

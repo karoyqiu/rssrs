@@ -1,17 +1,23 @@
 import type { Event } from '@tauri-apps/api/event';
 import { unique } from 'radash';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { dbGetItems, SeedItem } from './bindings';
 import type { SeedItemReadEvent } from './events';
 import useEvent from './useEvent';
 
-const useItems = () => {
+const useItems = (seedId: string | null) => {
   const [items, setItems] = useState<SeedItem[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [more, setMore] = useState(true);
 
+  useEffect(() => {
+    setItems([]);
+    setCursor(null);
+    setMore(true);
+  }, [seedId]);
+
   const loadMore = useCallback(async () => {
-    const result = await dbGetItems({ seed_id: null, limit: null, cursor });
+    const result = await dbGetItems({ seedId, limit: null, cursor });
 
     setItems((old) =>
       unique([...old, ...result.items], (item) => item.id).sort((a, b) => {
@@ -25,9 +31,9 @@ const useItems = () => {
       }),
     );
 
-    setCursor(result.next_cursor);
-    setMore(!!result.next_cursor);
-  }, [cursor]);
+    setCursor(result.nextCursor);
+    setMore(!!result.nextCursor);
+  }, [seedId, cursor]);
 
   const readHandler = useCallback(
     ({ payload }: Event<SeedItemReadEvent>) => {

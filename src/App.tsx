@@ -1,6 +1,6 @@
 import { appWindow } from '@tauri-apps/api/window';
 import { PlusIcon, SettingsIcon } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocalStorage } from 'usehooks-ts';
 
 import AddSeedDialog from '@/components/AddSeedDialog';
@@ -17,6 +17,7 @@ import useSeeds from '@/lib/useSeeds';
 import '@/globals.css';
 
 function App() {
+  const [seedId, setSeedId] = useState('*');
   const [autoRead, setAutoRead] = useLocalStorage('autoRead', true);
   const { seeds } = useSeeds();
 
@@ -37,7 +38,13 @@ function App() {
             </AddSeedDialog>
           </div>
           <ScrollArea className="grow">
-            <ToggleGroup className="mt-2" type="single" orientation="vertical">
+            <ToggleGroup
+              className="mt-2"
+              type="single"
+              orientation="vertical"
+              value={seedId}
+              onValueChange={setSeedId}
+            >
               <SeedToggleItem seed={null} />
               {seeds.map((seed) => (
                 <SeedToggleItem key={seed.id} seed={seed} />
@@ -53,14 +60,14 @@ function App() {
         </div>
       </ResizablePanel>
       <ResizableHandle />
-      <ResizablePanel minSize={50}>
+      <ResizablePanel minSize={50} className="flex flex-col">
         <div className="flex gap-2 border-b p-1">
           <Toggle pressed={autoRead} onPressedChange={setAutoRead}>
             Auto read
           </Toggle>
         </div>
-        <ScrollArea className="h-full w-full @container">
-          <ItemList />
+        <ScrollArea className="w-full @container">
+          <ItemList seedId={seedId === '*' ? null : seedId} />
         </ScrollArea>
       </ResizablePanel>
     </ResizablePanelGroup>

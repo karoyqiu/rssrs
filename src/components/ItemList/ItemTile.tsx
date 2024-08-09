@@ -27,7 +27,11 @@ export default function ItemTile(props: ItemTileProps) {
   };
 
   return (
-    <div ref={ref} className="flex h-[24rem] w-full flex-col overflow-hidden rounded border">
+    <div
+      ref={ref}
+      className="flex h-[24rem] w-full flex-col overflow-hidden rounded border"
+      data-test={item.id}
+    >
       <div className="grow cursor-pointer overflow-hidden" onClick={openLink}>
         <ItemCover desc={item.desc} />
       </div>
