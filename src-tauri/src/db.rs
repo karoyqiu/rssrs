@@ -6,7 +6,8 @@ use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::{AppHandle, Manager, State};
 
-use crate::seed::{Seed, SeedItem, SeedItemReadEvent, SeedUnreadCountEvent};
+use crate::events::{SeedItemReadEvent, SeedUnreadCountEvent};
+use crate::seed::{Seed, SeedItem};
 
 const CURRENT_DB_VERSION: u32 = 3;
 
@@ -120,8 +121,11 @@ fn upgrade_if_needed(db: &mut Connection, existing_version: u32) -> Result<()> {
 #[specta::specta]
 pub async fn db_insert_seed(app_handle: AppHandle, name: String, url: String) -> bool {
   let result = app_handle.db(|db| -> Result<()> {
-    let mut stmt = db.prepare("INSERT INTO seeds (name, url, interval) VALUES (?1, ?2, 10)")?;
+    let mut stmt = db.prepare("INSERT INTO seeds (name, url, interval, last_fetched_at, last_fetch_ok) VALUES (?1, ?2, 10, 0, 0)")?;
     stmt.execute([name, url])?;
+
+    app_handle.emit_all("app://seed/add", ()).unwrap();
+
     Ok(())
   });
 
