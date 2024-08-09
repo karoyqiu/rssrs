@@ -5,7 +5,7 @@ use reqwest::Proxy;
 use rss::{Channel, Item};
 use rusqlite::{params, Connection};
 use serde::Deserialize;
-use tauri::{api::path::app_data_dir, Config, Manager};
+use tauri::{AppHandle, Manager};
 
 use crate::{
   app_handle::get_app_handle,
@@ -40,10 +40,9 @@ fn get_proxy(db: &Connection) -> Result<ProxySettings> {
   }
 }
 
-fn get_data(config: &Config) -> Result<(ProxySettings, Vec<Seed>)> {
+fn get_data(app_handle: &AppHandle) -> Result<(ProxySettings, Vec<Seed>)> {
   // 打开数据库
-  let app_dir = app_data_dir(config);
-  let db = initialize(app_dir, true)?;
+  let db = initialize(app_handle, true)?;
 
   let proxy = get_proxy(&db)?;
   let seeds = get_all_seeds(&db)?;
@@ -51,9 +50,8 @@ fn get_data(config: &Config) -> Result<(ProxySettings, Vec<Seed>)> {
   Ok((proxy, seeds))
 }
 
-fn insert_items(config: &Config, seed_id: i64, items: &Vec<Item>) -> Result<()> {
-  let app_dir = app_data_dir(config);
-  let db = initialize(app_dir, false)?;
+fn insert_items(app_handle: &AppHandle, seed_id: i64, items: &Vec<Item>) -> Result<()> {
+  let db = initialize(app_handle, false)?;
   let mut stmt = db.prepare("INSERT OR IGNORE INTO items (seed_id, guid, title, author, desc, link, pub_date, unread) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)")?;
   let mut total = 0;
 
@@ -82,23 +80,31 @@ fn insert_items(config: &Config, seed_id: i64, items: &Vec<Item>) -> Result<()> 
   }
 
   if total > 0 {
-    if let Some(app) = get_app_handle() {
-      app
-        .emit_all(
-          "app://seed/new",
-          SeedUnreadCountEvent {
-            id: Some(seed_id),
-            unread_count: total as i32,
-          },
-        )
-        .unwrap();
-    }
+    info!("{total} new articles");
+    app_handle
+      .emit_all(
+        "app://seed/new",
+        SeedUnreadCountEvent {
+          id: Some(seed_id),
+          unread_count: total as i32,
+        },
+      )
+      .unwrap();
+    app_handle
+      .emit_all(
+        "app://seed/new",
+        SeedUnreadCountEvent {
+          id: None,
+          unread_count: total as i32,
+        },
+      )
+      .unwrap();
   }
 
   Ok(())
 }
 
-async fn fetch(config: &Config, proxy: &ProxySettings, seed: &Seed) -> Result<()> {
+async fn fetch(app_handle: &AppHandle, proxy: &ProxySettings, seed: &Seed) -> Result<()> {
   info!("Fetching {}", &seed.name);
   let mut client = reqwest::Client::builder();
 
@@ -115,30 +121,31 @@ async fn fetch(config: &Config, proxy: &ProxySettings, seed: &Seed) -> Result<()
   let client = client.build()?;
   let content = client.get(&seed.url).send().await?.bytes().await?;
   let channel = Channel::read_from(&content[..])?;
-  insert_items(config, seed.id, &channel.items)?;
+  insert_items(app_handle, seed.id, &channel.items)?;
 
   info!("Fetched {}", &seed.name);
   Ok(())
 }
 
-fn save_last_fetch(config: &Config, seed_id: i64, ok: bool) -> Result<()> {
-  let app_dir = app_data_dir(config);
-  let db = initialize(app_dir, false)?;
+fn save_last_fetch(app_handle: &AppHandle, seed_id: i64, ok: bool) -> Result<()> {
+  let db = initialize(app_handle, false)?;
   let mut stmt =
     db.prepare("UPDATE seeds SET last_fetched_at = ?2, last_fetch_ok = ?3 WHERE id = ?1")?;
   stmt.execute(params![seed_id, Local::now().timestamp(), ok])?;
   Ok(())
 }
 
-pub async fn check_seeds(config: &Config) -> Result<()> {
-  // 读取代理设置和种子
-  let (proxy, seeds) = get_data(config)?;
+pub async fn check_seeds() -> Result<()> {
+  if let Some(app_handle) = get_app_handle() {
+    // 读取代理设置和种子
+    let (proxy, seeds) = get_data(&app_handle)?;
 
-  for seed in seeds {
-    if seed.should_fetch() {
-      // 抓取
-      let result = fetch(config, &proxy, &seed).await;
-      save_last_fetch(config, seed.id, result.is_ok())?;
+    for seed in seeds {
+      if seed.should_fetch() {
+        // 抓取
+        let result = fetch(&app_handle, &proxy, &seed).await;
+        save_last_fetch(&app_handle, seed.id, result.is_ok())?;
+      }
     }
   }
 

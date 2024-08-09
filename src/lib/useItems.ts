@@ -10,11 +10,13 @@ const useItems = (seedId: string | null) => {
   const [cursor, setCursor] = useState<string | null>(null);
   const [more, setMore] = useState(true);
 
-  useEffect(() => {
+  const reload = useCallback(() => {
     setItems([]);
     setCursor(null);
     setMore(true);
-  }, [seedId]);
+  }, []);
+
+  useEffect(reload, [seedId]);
 
   const loadMore = useCallback(async () => {
     const result = await dbGetItems({ seedId, limit: null, cursor });
@@ -53,7 +55,7 @@ const useItems = (seedId: string | null) => {
 
   useEvent('app://item/unread', readHandler);
 
-  return { items, more, loadMore };
+  return { items, more, loadMore, reload };
 };
 
 export default useItems;

@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use log::info;
 use rusqlite::{params, Connection, OpenFlags, Result, Row};
 use serde::{Deserialize, Serialize};
@@ -49,8 +47,11 @@ impl DbAccess for AppHandle {
   // }
 }
 
-pub fn initialize(app_dir: Option<PathBuf>, readonly: bool) -> Result<Connection> {
-  let app_dir = app_dir.expect("The app data directory should exist.");
+pub fn initialize(app_handle: &AppHandle, readonly: bool) -> Result<Connection> {
+  let app_dir = app_handle
+    .path_resolver()
+    .app_data_dir()
+    .expect("The app data directory should exist.");
   std::fs::create_dir_all(&app_dir).expect("The app data directory should be created.");
   let sqlite_path = app_dir.join("rssrs.db");
 

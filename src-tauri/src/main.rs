@@ -55,23 +55,14 @@ fn main() {
 
   env_logger::init();
 
-  let ctx = tauri::generate_context!();
-  let config = ctx.config().clone();
-
   #[cfg(debug_assertions)]
-  let task = every(10).seconds().perform(move || {
-    let config = config.clone();
-    async move {
-      let _ = check_seeds(&config).await;
-    }
+  let task = every(10).seconds().perform(|| async {
+    let _ = check_seeds().await;
   });
 
   #[cfg(not(debug_assertions))]
-  let task = every(1).minute().perform(move || {
-    let config = config.clone();
-    async move {
-      let _ = check_seeds(&config).await;
-    }
+  let task = every(1).minute().perform(|| async {
+    let _ = check_seeds().await;
   });
 
   spawn(task);
@@ -93,13 +84,12 @@ fn main() {
       let handle = app.handle();
       set_app_handle(&handle);
 
-      let app_dir = handle.path_resolver().app_data_dir();
       let state: State<AppState> = handle.state();
-      let db = initialize(app_dir, false).expect("Failed to initialize database");
+      let db = initialize(&handle, false).expect("Failed to initialize database");
       *state.db.lock().unwrap() = Some(db);
 
       Ok(())
     })
-    .run(ctx)
+    .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }

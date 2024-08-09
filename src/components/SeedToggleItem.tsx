@@ -13,7 +13,7 @@ export default function SeedToggleItem(props: SeedToggleItemProps) {
   return (
     <ToggleGroupItem className="justify-between" value={seed?.id ?? '*'}>
       {seed?.name ?? 'All'}
-      <span className="font-mono">{unread}</span>
+      <span className="font-mono">{unread || ''}</span>
     </ToggleGroupItem>
   );
 }

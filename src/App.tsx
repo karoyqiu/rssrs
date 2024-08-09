@@ -30,7 +30,7 @@ function App() {
       <ResizablePanel defaultSize={20} minSize={10}>
         <div className="flex h-full flex-col gap-2 p-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Seeds</span>
+            <span className="ps-2 text-sm text-muted-foreground">Seeds</span>
             <AddSeedDialog>
               <Button variant="ghost" size="icon">
                 <PlusIcon />

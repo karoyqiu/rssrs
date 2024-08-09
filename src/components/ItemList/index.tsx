@@ -1,5 +1,9 @@
+import type { SeedUnreadCountEvent } from '@/lib/events';
+import useEvent from '@/lib/useEvent';
 import useItems from '@/lib/useItems';
-import { useEffect, useRef } from 'react';
+import type { Event } from '@tauri-apps/api/event';
+import { useCallback, useEffect, useRef } from 'react';
+import { toast } from 'sonner';
 import { useIntersectionObserver } from 'usehooks-ts';
 import ItemTile from './ItemTile';
 
@@ -9,7 +13,7 @@ type ItemListProps = {
 
 export default function ItemList(props: ItemListProps) {
   const { seedId } = props;
-  const { items, more, loadMore } = useItems(seedId);
+  const { items, more, loadMore, reload } = useItems(seedId);
   const { ref } = useIntersectionObserver({
     threshold: 0,
     onChange: (isIntersecting) => {
@@ -19,6 +23,27 @@ export default function ItemList(props: ItemListProps) {
     },
   });
   const topRef = useRef<HTMLDivElement>(null);
+
+  const toastId = useRef<string | number>();
+
+  const newHandler = useCallback(
+    ({ payload }: Event<SeedUnreadCountEvent>) => {
+      if (payload.id === seedId) {
+        toastId.current = toast.info('There are some new articles.', {
+          id: toastId.current,
+          duration: Infinity,
+          closeButton: true,
+          action: {
+            label: 'See new articles',
+            onClick: reload,
+          },
+        });
+      }
+    },
+    [seedId],
+  );
+
+  useEvent('app://seed/new', newHandler);
 
   useEffect(() => {
     topRef.current?.scrollIntoView();
