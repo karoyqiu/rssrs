@@ -7,7 +7,7 @@ use tauri::{AppHandle, Manager, State};
 use crate::events::{SeedItemReadEvent, SeedUnreadCountEvent};
 use crate::seed::{Seed, SeedItem};
 
-const CURRENT_DB_VERSION: u32 = 3;
+const CURRENT_DB_VERSION: u32 = 4;
 
 pub struct AppState {
   pub db: std::sync::Mutex<Option<Connection>>,
@@ -107,6 +107,10 @@ fn upgrade_if_needed(db: &mut Connection, existing_version: u32) -> Result<()> {
       CREATE TABLE IF NOT EXISTS settings (
         key TEXT PRIMARY KEY,
         value TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS watch_list (
+        id INTEGER PRIMARY KEY,
+        keyword TEXT NOT NULL UNIQUE
       );
       ",
     )?;
@@ -356,6 +360,64 @@ pub async fn db_mark_item_read(app_handle: AppHandle, item_id: i64, unread: bool
   }
 
   ok
+}
+
+/// 获取监视关键字列表。
+#[tauri::command]
+#[specta::specta]
+pub async fn db_get_watch_list(app_handle: AppHandle) -> Vec<String> {
+  let result = app_handle.db(|db| -> Result<Vec<String>> {
+    let mut stmt = db.prepare("SELECT keyword FROM watch_list")?;
+    let mut rows = stmt.query([])?;
+    let mut items = Vec::new();
+
+    while let Some(row) = rows.next()? {
+      let keyword: String = row.get(0)?;
+      items.push(keyword);
+    }
+
+    Ok(items)
+  });
+
+  result.unwrap()
+
+  // if let Ok(result) = result {
+  //   result
+  // } else {
+  //   vec![]
+  // }
+}
+
+/// 添加监视关键字。
+#[tauri::command]
+#[specta::specta]
+pub async fn db_add_watch_keyword(app_handle: AppHandle, keyword: String) -> bool {
+  let result = app_handle.db(|db| -> Result<()> {
+    let mut stmt = db.prepare("INSERT INTO watch_list (keyword) VALUES (?1)")?;
+    stmt.execute([keyword])?;
+    Ok(())
+  });
+
+  result.unwrap();
+  true
+
+  // result.is_ok()
+}
+
+/// 删除监视关键字。
+#[tauri::command]
+#[specta::specta]
+pub async fn db_delete_watch_keyword(app_handle: AppHandle, keyword: String) -> bool {
+  let result = app_handle.db(|db| -> Result<()> {
+    let mut stmt = db.prepare("DELETE FROM watch_list WHERE keyword = ?1")?;
+    stmt.execute([keyword])?;
+    Ok(())
+  });
+
+  result.unwrap();
+  true
+
+  // result.is_ok()
 }
 
 /// 获取设置。

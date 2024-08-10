@@ -9,8 +9,9 @@ mod seed;
 
 use app_handle::set_app_handle;
 use db::{
-  db_get_all_seeds, db_get_items, db_get_setting, db_get_unread_count, db_insert_seed,
-  db_mark_item_read, db_set_setting, initialize, AppState,
+  db_add_watch_keyword, db_delete_watch_keyword, db_get_all_seeds, db_get_items, db_get_setting,
+  db_get_unread_count, db_get_watch_list, db_insert_seed, db_mark_item_read, db_set_setting,
+  initialize, AppState,
 };
 use events::{SeedItemReadEvent, SeedUnreadCountEvent};
 use job::check_seeds;
@@ -23,21 +24,24 @@ use tokio_schedule::{every, Job};
 fn export_bindings() {
   let config = specta::ts::ExportConfiguration::new().bigint(BigIntExportBehavior::String);
 
-  println!(
-    "{}",
-    specta::ts::export::<SeedItemReadEvent>(&config).unwrap()
-  );
-  println!(
-    "{}",
-    specta::ts::export::<SeedUnreadCountEvent>(&config).unwrap()
-  );
+  // println!(
+  //   "{}",
+  //   specta::ts::export::<SeedItemReadEvent>(&config).unwrap()
+  // );
+  // println!(
+  //   "{}",
+  //   specta::ts::export::<SeedUnreadCountEvent>(&config).unwrap()
+  // );
 
   ts::export_with_cfg(
     collect_types![
+      db_add_watch_keyword,
+      db_delete_watch_keyword,
       db_get_all_seeds,
       db_get_items,
       db_get_setting,
       db_get_unread_count,
+      db_get_watch_list,
       db_insert_seed,
       db_mark_item_read,
       db_set_setting
@@ -72,10 +76,13 @@ fn main() {
       db: Default::default(),
     })
     .invoke_handler(tauri::generate_handler![
+      db_add_watch_keyword,
+      db_delete_watch_keyword,
       db_get_all_seeds,
       db_get_items,
       db_get_setting,
       db_get_unread_count,
+      db_get_watch_list,
       db_insert_seed,
       db_mark_item_read,
       db_set_setting

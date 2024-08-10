@@ -11,6 +11,20 @@ declare global {
 const invoke = () => window.__TAURI_INVOKE__;
 
 /**
+ * 添加监视关键字。
+ */
+export function dbAddWatchKeyword(keyword: string) {
+    return invoke()<boolean>("db_add_watch_keyword", { keyword })
+}
+
+/**
+ * 删除监视关键字。
+ */
+export function dbDeleteWatchKeyword(keyword: string) {
+    return invoke()<boolean>("db_delete_watch_keyword", { keyword })
+}
+
+/**
  * 获取所有种子。
  */
 export function dbGetAllSeeds() {
@@ -39,6 +53,13 @@ export function dbGetUnreadCount(seedId: string | null) {
 }
 
 /**
+ * 获取监视关键字列表。
+ */
+export function dbGetWatchList() {
+    return invoke()<string[]>("db_get_watch_list")
+}
+
+/**
  * 插入种子。
  */
 export function dbInsertSeed(name: string, url: string) {
@@ -64,8 +85,8 @@ export function dbSetSetting(key: string, value: string) {
  */
 export type SeedItem = { id: string; seed_id: string; seed_name: string; title: string; author: string; desc: string | null; link: string; pub_date: string; unread: boolean }
 export type ItemResult = { items: SeedItem[]; nextCursor: string | null }
-export type ItemFilters = { seedId: string | null; cursor: string | null; limit: string | null }
 /**
  * 种子
  */
 export type Seed = { id: string; name: string; url: string; favicon: string | null; interval: number; last_fetched_at: string; last_fetch_ok: boolean }
+export type ItemFilters = { seedId: string | null; cursor: string | null; limit: string | null }
