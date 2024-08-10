@@ -72,6 +72,7 @@ export default function ProxySettingsCard() {
   return (
     <Form {...form}>
       <form
+        className="h-full"
         onSubmit={form.handleSubmit(async (values) => {
           const ok = await save(values);
 
@@ -82,12 +83,12 @@ export default function ProxySettingsCard() {
           }
         })}
       >
-        <Card>
+        <Card className="flex h-full flex-col">
           <CardHeader>
             <CardTitle>Proxy</CardTitle>
             <CardDescription>Use a proxy to access the internet.</CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-2">
+          <CardContent className="flex grow flex-col gap-2">
             <FormField
               control={form.control}
               name="type"

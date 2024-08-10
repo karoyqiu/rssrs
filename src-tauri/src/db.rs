@@ -399,6 +399,9 @@ pub async fn db_add_watch_keyword(app_handle: AppHandle, keyword: String) -> boo
   });
 
   result.unwrap();
+
+  app_handle.emit_all("app://watchlist/change", ()).unwrap();
+
   true
 
   // result.is_ok()
@@ -415,6 +418,9 @@ pub async fn db_delete_watch_keyword(app_handle: AppHandle, keyword: String) -> 
   });
 
   result.unwrap();
+
+  app_handle.emit_all("app://watchlist/change", ()).unwrap();
+
   true
 
   // result.is_ok()
