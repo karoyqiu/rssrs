@@ -1,5 +1,5 @@
 import { appWindow } from '@tauri-apps/api/window';
-import { PlusIcon, SettingsIcon } from 'lucide-react';
+import { EyeIcon, PlusIcon, SettingsIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocalStorage } from 'usehooks-ts';
 
@@ -11,13 +11,14 @@ import { Button } from '@/components/ui/button';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Toggle } from '@/components/ui/toggle';
-import { ToggleGroup } from '@/components/ui/toggle-group';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import WatchListDialog from '@/components/WatchListDialog';
 import useSeeds from '@/lib/useSeeds';
 
 import '@/globals.css';
 
 function App() {
-  const [seedId, setSeedId] = useState('*');
+  const [seedId, setSeedId] = useState(0);
   const [autoRead, setAutoRead] = useLocalStorage('autoRead', true);
   const { seeds } = useSeeds();
 
@@ -42,9 +43,20 @@ function App() {
               className="mt-2"
               type="single"
               orientation="vertical"
-              value={seedId}
-              onValueChange={setSeedId}
+              value={seedId.toString()}
+              onValueChange={(value) => {
+                if (value.length > 0) {
+                  setSeedId(parseInt(value, 10));
+                }
+              }}
             >
+              <ToggleGroupItem className="justify-start" value="-1">
+                <EyeIcon />
+                Watch list
+                <WatchListDialog>
+                  <SettingsIcon className="ms-auto hover:text-primary" />
+                </WatchListDialog>
+              </ToggleGroupItem>
               <SeedToggleItem seed={null} />
               {seeds.map((seed) => (
                 <SeedToggleItem key={seed.id} seed={seed} />
@@ -67,7 +79,7 @@ function App() {
           </Toggle>
         </div>
         <ScrollArea className="w-full @container">
-          <ItemList seedId={seedId === '*' ? null : seedId} />
+          <ItemList seedId={seedId === 0 ? null : seedId} />
         </ScrollArea>
       </ResizablePanel>
     </ResizablePanelGroup>

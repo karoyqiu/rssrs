@@ -48,7 +48,7 @@ export function dbGetSetting(key: string) {
 /**
  * 获取未读数量。
  */
-export function dbGetUnreadCount(seedId: string | null) {
+export function dbGetUnreadCount(seedId: number | null) {
     return invoke()<number>("db_get_unread_count", { seedId })
 }
 
@@ -69,7 +69,7 @@ export function dbInsertSeed(name: string, url: string) {
 /**
  * 将项标记为已读或未读。
  */
-export function dbMarkItemRead(itemId: string, unread: boolean) {
+export function dbMarkItemRead(itemId: number, unread: boolean) {
     return invoke()<boolean>("db_mark_item_read", { itemId,unread })
 }
 
@@ -83,10 +83,10 @@ export function dbSetSetting(key: string, value: string) {
 /**
  * 种子项
  */
-export type SeedItem = { id: string; seed_id: string; seed_name: string; title: string; author: string; desc: string | null; link: string; pub_date: string; unread: boolean }
+export type SeedItem = { id: number; seed_id: number; seed_name: string; title: string; author: string; desc: string | null; link: string; pub_date: number; unread: boolean }
 export type ItemResult = { items: SeedItem[]; nextCursor: string | null }
 /**
  * 种子
  */
-export type Seed = { id: string; name: string; url: string; favicon: string | null; interval: number; last_fetched_at: string; last_fetch_ok: boolean }
-export type ItemFilters = { seedId: string | null; cursor: string | null; limit: string | null }
+export type Seed = { id: number; name: string; url: string; favicon: string | null; interval: number; last_fetched_at: number; last_fetch_ok: boolean }
+export type ItemFilters = { seedId: number | null; cursor: string | null; limit: number | null }

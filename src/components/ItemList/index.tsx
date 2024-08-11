@@ -1,14 +1,16 @@
-import type { SeedUnreadCountEvent } from '@/lib/events';
-import useEvent from '@/lib/useEvent';
-import useItems from '@/lib/useItems';
 import type { Event } from '@tauri-apps/api/event';
 import { useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { useIntersectionObserver } from 'usehooks-ts';
+
+import type { Seed } from '@/lib/bindings';
+import type { SeedUnreadCountEvent } from '@/lib/events';
+import useEvent from '@/lib/useEvent';
+import useItems from '@/lib/useItems';
 import ItemTile from './ItemTile';
 
 type ItemListProps = {
-  seedId: string | null;
+  seedId: Seed['id'] | null;
 };
 
 export default function ItemList(props: ItemListProps) {

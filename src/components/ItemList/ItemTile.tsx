@@ -52,7 +52,7 @@ export default function ItemTile(props: ItemTileProps) {
         </span>
         <span className="w-full text-sm text-muted-foreground">{item.seed_name}</span>
         <div className="flex w-full items-center justify-between text-sm text-muted-foreground">
-          <span>{new Date(parseInt(item.pub_date, 10) * 1000).toLocaleString()}</span>
+          <span>{new Date(item.pub_date * 1000).toLocaleString()}</span>
           {item.unread ? <MailIcon /> : <MailOpenIcon />}
         </div>
       </div>

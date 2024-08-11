@@ -1,41 +1,42 @@
 import type { Event } from '@tauri-apps/api/event';
 import { unique } from 'radash';
 import { useCallback, useEffect, useState } from 'react';
-import { dbGetItems, SeedItem } from './bindings';
+import { dbGetItems, SeedItem, type Seed } from './bindings';
 import type { SeedItemReadEvent } from './events';
 import useEvent from './useEvent';
 
-const useItems = (seedId: string | null) => {
+const useItems = (seedId: Seed['id'] | null) => {
   const [items, setItems] = useState<SeedItem[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [more, setMore] = useState(true);
-
-  const reload = useCallback(() => {
-    setItems([]);
-    setCursor(null);
-    setMore(true);
-  }, []);
-
-  useEffect(reload, [seedId]);
 
   const loadMore = useCallback(async () => {
     const result = await dbGetItems({ seedId, limit: null, cursor });
 
     setItems((old) =>
       unique([...old, ...result.items], (item) => item.id).sort((a, b) => {
-        let diff = parseInt(b.pub_date, 10) - parseInt(a.pub_date, 10);
+        let diff = b.pub_date - a.pub_date;
 
         if (diff !== 0) {
           return diff;
         }
 
-        return parseInt(a.id, 10) - parseInt(b.id, 10);
+        return a.id - b.id;
       }),
     );
 
     setCursor(result.nextCursor);
     setMore(!!result.nextCursor);
   }, [seedId, cursor]);
+
+  const reload = useCallback(() => {
+    setItems([]);
+    setCursor(null);
+    setMore(true);
+    loadMore();
+  }, [loadMore]);
+
+  useEffect(reload, [seedId]);
 
   const readHandler = useCallback(
     ({ payload }: Event<SeedItemReadEvent>) => {

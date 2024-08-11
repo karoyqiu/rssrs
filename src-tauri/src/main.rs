@@ -22,7 +22,7 @@ use tokio_schedule::{every, Job};
 
 #[cfg(debug_assertions)]
 fn export_bindings() {
-  let config = specta::ts::ExportConfiguration::new().bigint(BigIntExportBehavior::String);
+  let config = specta::ts::ExportConfiguration::new().bigint(BigIntExportBehavior::Number);
 
   // println!(
   //   "{}",

@@ -1,9 +1,10 @@
 import { ToggleGroupItem } from '@/components/ui/toggle-group';
 import type { Seed } from '@/lib/bindings';
-import useSeedUnreadCount from '../lib/useSeedUnreadCount';
+import useSeedUnreadCount from '@/lib/useSeedUnreadCount';
+import { ListIcon, RssIcon } from 'lucide-react';
 
 type SeedToggleItemProps = {
-  seed: Seed | null;
+  seed: Pick<Seed, 'id' | 'name'> | null;
 };
 
 export default function SeedToggleItem(props: SeedToggleItemProps) {
@@ -11,9 +12,10 @@ export default function SeedToggleItem(props: SeedToggleItemProps) {
   const unread = useSeedUnreadCount(seed?.id ?? null);
 
   return (
-    <ToggleGroupItem className="justify-between" value={seed?.id ?? '*'}>
+    <ToggleGroupItem className="justify-start" value={seed?.id.toString() ?? '0'}>
+      {seed?.id ? <RssIcon /> : <ListIcon />}
       {seed?.name ?? 'All'}
-      <span className="font-mono">{unread || ''}</span>
+      <span className="ms-auto font-mono">{unread || ''}</span>
     </ToggleGroupItem>
   );
 }
