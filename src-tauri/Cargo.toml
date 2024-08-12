@@ -1,8 +1,8 @@
 [package]
 name = "rssrs"
-version = "0.0.0"
-description = "A Tauri App"
-authors = ["you"]
+version = "0.1.0"
+description = "RSS reader"
+authors = ["karoyqiu@gmail.com"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -11,10 +11,26 @@ edition = "2021"
 tauri-build = { version = "1", features = [] }
 
 [dependencies]
-tauri = { version = "1", features = ["shell-open"] }
+anyhow = "1.0.86"
+chrono = { version = "0.4.38", features = ["serde"] }
+env_logger = "0.11.5"
+log = "0.4.22"
+reqwest = { version = "0.12.5", features = ["gzip", "brotli", "deflate"] }
+rss = { version = "2.0.8", default-features = false }
+rusqlite = { version = "0.32.1", features = ["bundled"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+specta = "1.0.5"
+tauri = { version = "1", features = [ "system-tray", "window-show", "window-maximize", "shell-open"] }
+tauri-specta = { version = "1.0.2", features = ["typescript"] }
+tokio_schedule = "0.3.2"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+strip = "symbols"
+panic = "abort"
