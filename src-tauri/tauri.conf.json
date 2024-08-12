@@ -32,6 +32,11 @@
     "security": {
       "csp": "default-src 'self'"
     },
+    "systemTray": {
+      "iconPath": "icons/32x32.png",
+      "iconAsTemplate": true,
+      "title": "RSS"
+    },
     "bundle": {
       "active": false,
       "targets": "all",

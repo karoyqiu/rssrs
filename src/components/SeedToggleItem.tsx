@@ -14,7 +14,7 @@ export default function SeedToggleItem(props: SeedToggleItemProps) {
   return (
     <ToggleGroupItem className="justify-start" value={seed?.id.toString() ?? '0'}>
       {seed?.id ? <RssIcon /> : <ListIcon />}
-      {seed?.name ?? 'All'}
+      <span>{seed?.name ?? 'All'}</span>
       <span className="ms-auto font-mono">{unread || ''}</span>
     </ToggleGroupItem>
   );

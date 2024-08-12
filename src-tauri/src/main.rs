@@ -16,7 +16,10 @@ use db::{
 //use events::{SeedItemReadEvent, SeedUnreadCountEvent};
 use job::check_seeds;
 use specta::{collect_types, ts::BigIntExportBehavior};
-use tauri::{async_runtime::spawn, Manager, State};
+use tauri::{
+  async_runtime::spawn, AppHandle, CustomMenuItem, Manager, State, SystemTray, SystemTrayEvent,
+  SystemTrayMenu, SystemTrayMenuItem, WindowBuilder,
+};
 use tauri_specta::ts;
 use tokio_schedule::{every, Job};
 
@@ -54,6 +57,17 @@ fn export_bindings() {
   .unwrap();
 }
 
+fn show_main_window(app: &AppHandle) -> tauri::Result<()> {
+  if let Some(window) = app.get_window("main") {
+    window.show()?;
+    window.set_focus()?;
+  } else {
+    WindowBuilder::from_config(app, app.config().tauri.windows.get(0).unwrap().clone()).build()?;
+  }
+
+  Ok(())
+}
+
 fn main() {
   #[cfg(debug_assertions)]
   export_bindings();
@@ -71,6 +85,14 @@ fn main() {
   });
 
   spawn(task);
+
+  let exit = CustomMenuItem::new("exit".to_string(), "Exit");
+  let show = CustomMenuItem::new("show".to_string(), "Show");
+  let tray_menu = SystemTrayMenu::new()
+    .add_item(show)
+    .add_native_item(SystemTrayMenuItem::Separator)
+    .add_item(exit);
+  let tray = SystemTray::new().with_tooltip("RSS").with_menu(tray_menu);
 
   tauri::Builder::default()
     .manage(AppState {
@@ -99,6 +121,28 @@ fn main() {
 
       Ok(())
     })
-    .run(tauri::generate_context!())
-    .expect("error while running tauri application");
+    .system_tray(tray)
+    .on_system_tray_event(|app, event| match event {
+      SystemTrayEvent::DoubleClick { .. } => {
+        show_main_window(app).unwrap();
+      }
+      SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
+        "show" => {
+          show_main_window(app).unwrap();
+        }
+        "exit" => {
+          std::process::exit(0);
+        }
+        _ => {}
+      },
+      _ => {}
+    })
+    .build(tauri::generate_context!())
+    .expect("error while running tauri application")
+    .run(|_app_handle, event| match event {
+      tauri::RunEvent::ExitRequested { api, .. } => {
+        api.prevent_exit();
+      }
+      _ => {}
+    });
 }

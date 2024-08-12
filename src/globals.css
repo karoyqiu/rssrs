@@ -78,7 +78,7 @@
 }
 
 .lucide {
-  @apply size-5;
+  @apply size-5 shrink-0;
 }
 
 label.required {
