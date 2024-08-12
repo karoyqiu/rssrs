@@ -399,13 +399,6 @@ pub async fn db_mark_item_read(app_handle: AppHandle, item_id: i64, unread: bool
       )
       .unwrap();
 
-    Ok(())
-  });
-
-  let ok = result.is_ok();
-
-  if ok {
-    // ! 为了图省事，全都 unwrap 了。
     // 上报项已读事件
     app_handle
       .emit_all(
@@ -416,11 +409,74 @@ pub async fn db_mark_item_read(app_handle: AppHandle, item_id: i64, unread: bool
         },
       )
       .unwrap();
-  } else {
-    result.unwrap();
-  }
 
-  ok
+    Ok(())
+  });
+
+  result.unwrap();
+  true
+}
+
+/// 全部标记为已读
+#[tauri::command]
+#[specta::specta]
+pub async fn db_read_all(app_handle: AppHandle, seed_id: Option<i64>) -> bool {
+  let sid = seed_id.unwrap_or_default();
+  info!("Read all: {sid}");
+
+  let result = app_handle.db(|db| -> Result<()> {
+    let (sql, params) = if sid > 0 {
+      (
+        "UPDATE items SET unread = ?1 WHERE seed_id = ?2",
+        vec![0, sid],
+      )
+    } else {
+      ("UPDATE items SET unread = ?1", vec![0])
+    };
+
+    let mut stmt = db.prepare(sql)?;
+    stmt.execute(params_from_iter(params))?;
+
+    // 上报种子未读数量事件
+    app_handle
+      .emit_all(
+        "app://seed/unread",
+        SeedUnreadCountEvent {
+          id: seed_id,
+          unread_count: 0,
+        },
+      )
+      .unwrap();
+
+    app_handle
+      .emit_all(
+        "app://seed/unread",
+        SeedUnreadCountEvent {
+          id: None,
+          unread_count: if sid > 0 {
+            get_unread_count(db, None)?
+          } else {
+            0
+          },
+        },
+      )
+      .unwrap();
+
+    app_handle
+      .emit_all(
+        "app://item/unread",
+        SeedItemReadEvent {
+          id: -1,
+          unread: false,
+        },
+      )
+      .unwrap();
+
+    Ok(())
+  });
+
+  result.unwrap();
+  true
 }
 
 fn get_watch_list(db: &Connection) -> Result<Vec<String>> {

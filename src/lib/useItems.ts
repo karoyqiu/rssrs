@@ -41,14 +41,18 @@ const useItems = (seedId: Seed['id'] | null) => {
   const readHandler = useCallback(
     ({ payload }: Event<SeedItemReadEvent>) => {
       setItems((old) => {
-        const idx = old.findIndex((item) => item.id === payload.id);
+        if (payload.id > 0) {
+          const idx = old.findIndex((item) => item.id === payload.id);
 
-        if (idx >= 0) {
-          const current = old[idx];
-          return old.toSpliced(idx, 1, { ...current, unread: payload.unread });
+          if (idx >= 0) {
+            const current = old[idx];
+            return old.toSpliced(idx, 1, { ...current, unread: payload.unread });
+          }
+
+          return old;
+        } else {
+          return old.map((item) => ({ ...item, unread: payload.unread }));
         }
-
-        return old;
       });
     },
     [setItems],

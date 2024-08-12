@@ -13,6 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Toggle } from '@/components/ui/toggle';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import WatchListDialog from '@/components/WatchListDialog';
+import { dbReadAll } from '@/lib/bindings';
 import useSeeds from '@/lib/useSeeds';
 
 import '@/globals.css';
@@ -73,10 +74,13 @@ function App() {
       </ResizablePanel>
       <ResizableHandle />
       <ResizablePanel minSize={50} className="flex flex-col">
-        <div className="flex gap-2 border-b p-1">
+        <div className="flex gap-1 border-b p-1">
           <Toggle pressed={autoRead} onPressedChange={setAutoRead}>
             Auto read
           </Toggle>
+          <Button disabled={seedId < 0} onClick={() => dbReadAll(seedId)}>
+            Read all
+          </Button>
         </div>
         <ScrollArea className="w-full @container">
           <ItemList seedId={seedId === 0 ? null : seedId} />

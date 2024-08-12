@@ -74,6 +74,13 @@ export function dbMarkItemRead(itemId: number, unread: boolean) {
 }
 
 /**
+ * 全部标记为已读
+ */
+export function dbReadAll(seedId: number | null) {
+    return invoke()<boolean>("db_read_all", { seedId })
+}
+
+/**
  * 修改设置。
  */
 export function dbSetSetting(key: string, value: string) {

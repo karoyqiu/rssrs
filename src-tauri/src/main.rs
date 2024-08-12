@@ -10,10 +10,10 @@ mod seed;
 use app_handle::set_app_handle;
 use db::{
   db_add_watch_keyword, db_delete_watch_keyword, db_get_all_seeds, db_get_items, db_get_setting,
-  db_get_unread_count, db_get_watch_list, db_insert_seed, db_mark_item_read, db_set_setting,
-  initialize, AppState,
+  db_get_unread_count, db_get_watch_list, db_insert_seed, db_mark_item_read, db_read_all,
+  db_set_setting, initialize, AppState,
 };
-use events::{SeedItemReadEvent, SeedUnreadCountEvent};
+//use events::{SeedItemReadEvent, SeedUnreadCountEvent};
 use job::check_seeds;
 use specta::{collect_types, ts::BigIntExportBehavior};
 use tauri::{async_runtime::spawn, Manager, State};
@@ -44,6 +44,7 @@ fn export_bindings() {
       db_get_watch_list,
       db_insert_seed,
       db_mark_item_read,
+      db_read_all,
       db_set_setting
     ]
     .unwrap(),
@@ -85,6 +86,7 @@ fn main() {
       db_get_watch_list,
       db_insert_seed,
       db_mark_item_read,
+      db_read_all,
       db_set_setting
     ])
     .setup(|app| {
