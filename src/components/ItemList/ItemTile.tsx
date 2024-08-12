@@ -1,8 +1,10 @@
 import { open } from '@tauri-apps/api/shell';
 import { MailIcon, MailOpenIcon } from 'lucide-react';
+import Highlighter from 'react-highlight-words';
 import { useIntersectionObserver, useReadLocalStorage } from 'usehooks-ts';
 
 import { dbMarkItemRead, type SeedItem } from '@/lib/bindings';
+import useWatchList from '@/lib/useWatchList';
 import { cn } from '@/lib/utils';
 import ItemCover from './ItemCover';
 
@@ -12,6 +14,7 @@ type ItemTileProps = {
 
 export default function ItemTile(props: ItemTileProps) {
   const { item } = props;
+  const { keywords } = useWatchList();
   const autoRead = useReadLocalStorage<boolean>('autoRead') ?? true;
   const { ref } = useIntersectionObserver({
     threshold: 0,
@@ -41,15 +44,16 @@ export default function ItemTile(props: ItemTileProps) {
         <ItemCover desc={item.desc} />
       </div>
       <div className="flex w-full flex-col gap-px p-2 text-start">
-        <span
+        <Highlighter
+          searchWords={keywords}
+          autoEscape
+          textToHighlight={item.title}
           className={cn(
             'w-full cursor-pointer',
             item.unread ? 'font-bold' : 'text-muted-foreground',
           )}
           onClick={openLink}
-        >
-          {item.title}
-        </span>
+        />
         <span className="w-full text-sm text-muted-foreground">{item.seed_name}</span>
         <div className="flex w-full items-center justify-between text-sm text-muted-foreground">
           <span>{new Date(item.pub_date * 1000).toLocaleString()}</span>

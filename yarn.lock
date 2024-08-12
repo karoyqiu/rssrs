@@ -1510,6 +1510,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/react-highlight-words@npm:^0.20.0":
+  version: 0.20.0
+  resolution: "@types/react-highlight-words@npm:0.20.0"
+  dependencies:
+    "@types/react": "*"
+  checksum: 56246d8678ef5cf32b7c02bce7759946e28da7b079d5a59c7f1ca5b3e5a8bd521c4151fac192281cf56c0a62b2276d990162253f869e9ff3ef451c603e783bc4
+  languageName: node
+  linkType: hard
+
 "@types/react@npm:*, @types/react@npm:^18.2.15":
   version: 18.3.3
   resolution: "@types/react@npm:18.3.3"
@@ -2226,6 +2235,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"highlight-words-core@npm:^1.2.0":
+  version: 1.2.2
+  resolution: "highlight-words-core@npm:1.2.2"
+  checksum: 737758a8a572c82919552b031df300016164b7d0db6a819d24bc6c7ca2279d3cd6d03497728930d6402423c7a3fc2f42c628a9b01b025c704a0b56a635377511
+  languageName: node
+  linkType: hard
+
 "http-cache-semantics@npm:^4.1.1":
   version: 4.1.1
   resolution: "http-cache-semantics@npm:4.1.1"
@@ -2446,7 +2462,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"loose-envify@npm:^1.0.0, loose-envify@npm:^1.1.0":
+"loose-envify@npm:^1.0.0, loose-envify@npm:^1.1.0, loose-envify@npm:^1.4.0":
   version: 1.4.0
   resolution: "loose-envify@npm:1.4.0"
   dependencies:
@@ -2499,6 +2515,13 @@ __metadata:
     promise-retry: ^2.0.1
     ssri: ^10.0.0
   checksum: 5c9fad695579b79488fa100da05777213dd9365222f85e4757630f8dd2a21a79ddd3206c78cfd6f9b37346819681782b67900ac847a57cf04190f52dda5343fd
+  languageName: node
+  linkType: hard
+
+"memoize-one@npm:^4.0.0":
+  version: 4.0.3
+  resolution: "memoize-one@npm:4.0.3"
+  checksum: addd18c046542f57440ba70bf8ebd48663d17626cade681f777522ef70900a87ec72c5041bed8ece4f6d40a2cb58803bae388b50a4b740d64f36bcda20c147b7
   languageName: node
   linkType: hard
 
@@ -2717,7 +2740,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"object-assign@npm:^4.0.1":
+"object-assign@npm:^4.0.1, object-assign@npm:^4.1.1":
   version: 4.1.1
   resolution: "object-assign@npm:4.1.1"
   checksum: fcc6e4ea8c7fe48abfbb552578b1c53e0d194086e2e6bbbf59e0a536381a292f39943c6e9628af05b5528aa5e3318bb30d6b2e53cadaf5b8fe9e12c4b69af23f
@@ -2970,6 +2993,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"prop-types@npm:^15.5.8":
+  version: 15.8.1
+  resolution: "prop-types@npm:15.8.1"
+  dependencies:
+    loose-envify: ^1.4.0
+    object-assign: ^4.1.1
+    react-is: ^16.13.1
+  checksum: c056d3f1c057cb7ff8344c645450e14f088a915d078dcda795041765047fa080d38e5d626560ccaac94a4e16e3aa15f3557c1a9a8d1174530955e992c675e459
+  languageName: node
+  linkType: hard
+
 "queue-microtask@npm:^1.2.2":
   version: 1.2.3
   resolution: "queue-microtask@npm:1.2.3"
@@ -2996,12 +3030,32 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-highlight-words@npm:^0.20.0":
+  version: 0.20.0
+  resolution: "react-highlight-words@npm:0.20.0"
+  dependencies:
+    highlight-words-core: ^1.2.0
+    memoize-one: ^4.0.0
+    prop-types: ^15.5.8
+  peerDependencies:
+    react: ^0.14.0 || ^15.0.0 || ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0
+  checksum: 6794b6fe409ee81390e342ccdb951696e06354d8591b4cac050a6d64dbc77dfc7bb636fee0aabcfda841e57778aa5108fe351e7c1dc27b28abedd36aec8141e7
+  languageName: node
+  linkType: hard
+
 "react-hook-form@npm:^7.52.2":
   version: 7.52.2
   resolution: "react-hook-form@npm:7.52.2"
   peerDependencies:
     react: ^16.8.0 || ^17 || ^18 || ^19
   checksum: 8621a21cf674f46507776741b2507d5357564af62bfc9dae8d1d7fb9076538352a48f16485885d3379d685d2d50537b28285322ad5a8c33d0ea5ddff21080543
+  languageName: node
+  linkType: hard
+
+"react-is@npm:^16.13.1":
+  version: 16.13.1
+  resolution: "react-is@npm:16.13.1"
+  checksum: f7a19ac3496de32ca9ae12aa030f00f14a3d45374f1ceca0af707c831b2a6098ef0d6bdae51bd437b0a306d7f01d4677fcc8de7c0d331eb47ad0f46130e53c5f
   languageName: node
   linkType: hard
 
@@ -3231,6 +3285,7 @@ __metadata:
     "@types/node": ^22.1.0
     "@types/react": ^18.2.15
     "@types/react-dom": ^18.2.7
+    "@types/react-highlight-words": ^0.20.0
     "@vitejs/plugin-react": ^4.2.1
     autoprefixer: ^10.4.20
     class-variance-authority: ^0.7.0
@@ -3244,6 +3299,7 @@ __metadata:
     radash: ^12.1.0
     react: ^18.2.0
     react-dom: ^18.2.0
+    react-highlight-words: ^0.20.0
     react-hook-form: ^7.52.2
     react-resizable-panels: ^2.0.22
     simpler-state: ^1.2.1
