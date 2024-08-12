@@ -30,7 +30,11 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'"
+      "csp": {
+        "default-src": ["'self'"],
+        "img-src": ["'self'", "https:"],
+        "style-src": ["'self'", "'nonce-rWvh_Hd30vNJfto7tl9ve'"]
+      }
     },
     "systemTray": {
       "iconPath": "icons/32x32.png",

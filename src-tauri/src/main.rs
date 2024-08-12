@@ -15,11 +15,13 @@ use db::{
 };
 //use events::{SeedItemReadEvent, SeedUnreadCountEvent};
 use job::check_seeds;
+#[cfg(debug_assertions)]
 use specta::{collect_types, ts::BigIntExportBehavior};
 use tauri::{
   async_runtime::spawn, AppHandle, CustomMenuItem, Manager, State, SystemTray, SystemTrayEvent,
   SystemTrayMenu, SystemTrayMenuItem, WindowBuilder,
 };
+#[cfg(debug_assertions)]
 use tauri_specta::ts;
 use tokio_schedule::{every, Job};
 
