@@ -1,6 +1,6 @@
 [package]
 name = "rssrs"
-version = "0.0.0"
+version = "0.1.0"
 description = "RSS reader"
 authors = ["karoyqiu@gmail.com"]
 edition = "2021"
