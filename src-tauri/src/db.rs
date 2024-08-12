@@ -1,5 +1,8 @@
+use std::vec;
+
 use log::info;
-use rusqlite::{params, Connection, OpenFlags, Result, Row};
+use rusqlite::types::Value;
+use rusqlite::{params, params_from_iter, Connection, OpenFlags, Result, Row};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::{AppHandle, Manager, State};
@@ -242,7 +245,7 @@ fn get_seed_item(db: &Connection, id: i64) -> Result<SeedItem> {
 pub struct ItemFilters {
   pub seed_id: Option<i64>,
   pub cursor: Option<String>,
-  pub limit: Option<usize>,
+  pub limit: Option<i32>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Type)]
@@ -252,44 +255,102 @@ pub struct ItemResult {
   next_cursor: Option<String>,
 }
 
+fn get_items_with(
+  db: &Connection,
+  filters: &ItemFilters,
+  query: &Option<String>,
+  mut params: Vec<Value>,
+) -> Result<ItemResult> {
+  let mut pub_date = i64::MAX;
+  let mut id = 0i64;
+  let limit = filters.limit.unwrap_or(20);
+
+  if let Some(cursor) = &filters.cursor {
+    // cursor 格式：pub_date:id
+    let splitted: Vec<&str> = cursor.split(':').collect();
+    pub_date = splitted[0].parse().unwrap_or(i64::MAX);
+    id = splitted[1].parse().unwrap_or(0);
+  }
+
+  params.insert(0, (limit + 1).into());
+  params.insert(0, Value::Integer(0)); // unread
+  params.insert(0, Value::Integer(id));
+  params.insert(0, Value::Integer(pub_date));
+
+  let query = if let Some(q) = query {
+    format!("AND ({})", q)
+  } else {
+    String::default()
+  };
+  let sql = format!("SELECT items.*, seeds.name FROM items LEFT JOIN seeds ON items.seed_id = seeds.id WHERE (pub_date < ?1 OR (pub_date = ?1 AND items.id >= ?2)) AND unread != ?3 {} ORDER BY pub_date DESC, items.id ASC LIMIT ?4", query);
+  let mut stmt = db.prepare(&sql)?;
+  let mut rows = stmt.query(params_from_iter(params))?;
+  let mut items = Vec::new();
+
+  while let Some(row) = rows.next()? {
+    items.push(to_seed_item(row)?);
+  }
+
+  let next_cursor = if items.len() > limit as usize {
+    let last = items.pop().unwrap();
+    Some(format!("{}:{}", last.pub_date, last.id))
+  } else {
+    None
+  };
+
+  Ok(ItemResult { items, next_cursor })
+}
+
+fn get_watched_items(db: &Connection, filters: &ItemFilters) -> Result<ItemResult> {
+  let keywords = get_watch_list(db)?;
+
+  if keywords.is_empty() {
+    return Ok(ItemResult {
+      items: vec![],
+      next_cursor: None,
+    });
+  }
+
+  let mut conds = Vec::new();
+
+  for n in 0..keywords.len() {
+    conds.push(format!("instr(title, ?{}) > 0", n + 5));
+  }
+
+  let mut params: Vec<Value> = Vec::new();
+
+  for keyword in keywords {
+    params.push(keyword.into());
+  }
+
+  get_items_with(db, filters, &Some(conds.join(" OR ")), params)
+}
+
+fn get_items(db: &Connection, filters: &ItemFilters) -> Result<ItemResult> {
+  let (query, params) = if let Some(seed_id) = filters.seed_id {
+    (
+      Some(String::from("seed_id = ?5")),
+      vec![Value::Integer(seed_id)],
+    )
+  } else {
+    (None, vec![])
+  };
+
+  get_items_with(db, filters, &query, params)
+}
+
 /// 获取项。
 #[tauri::command]
 #[specta::specta]
 pub async fn db_get_items(app_handle: AppHandle, filters: ItemFilters) -> ItemResult {
-  let result = app_handle.db(move |db| -> Result<ItemResult> {
-    let sql = if filters.seed_id.is_some() {
-      "SELECT items.*, seeds.name FROM items LEFT JOIN seeds ON items.seed_id = seeds.id WHERE seed_id = ?4 AND unread != 0 AND (pub_date < ?1 OR (pub_date = ?1 AND items.id >= ?2)) ORDER BY pub_date DESC, items.id ASC LIMIT ?3"
-    } else {
-      "SELECT items.*, seeds.name FROM items LEFT JOIN seeds ON items.seed_id = seeds.id WHERE seed_id != ?4 AND unread != 0 AND (pub_date < ?1 OR (pub_date = ?1 AND items.id >= ?2)) ORDER BY pub_date DESC, items.id ASC LIMIT ?3"
-    };
-    let mut pub_date = i64::MAX;
-    let mut id = 0i64;
-    let limit = filters.limit.unwrap_or(20);
-    let seed_id = filters.seed_id.unwrap_or(0);
-
-    if let Some(cursor) = filters.cursor {
-      // cursor 格式：pub_date:id
-      let splitted: Vec<&str> = cursor.split(':').collect();
-      pub_date = splitted[0].parse().unwrap_or(i64::MAX);
-      id = splitted[1].parse().unwrap_or(0);
+  let result = app_handle.db(|db| -> Result<ItemResult> {
+    if let Some(seed_id) = filters.seed_id {
+      if seed_id < 0 {
+        return get_watched_items(db, &filters);
+      }
     }
 
-    let mut stmt = db.prepare(&sql)?;
-    let mut rows = stmt.query(params![pub_date, id, limit + 1, seed_id])?;
-    let mut items = Vec::new();
-
-    while let Some(row) = rows.next()? {
-      items.push(to_seed_item(row)?);
-    }
-
-    let next_cursor = if items.len() > limit {
-      let last = items.pop().unwrap();
-      Some(format!("{}:{}", last.pub_date, last.id))
-    } else {
-      None
-    };
-
-    Ok(ItemResult{ items, next_cursor })
+    get_items(db, &filters)
   });
 
   result.unwrap()
@@ -362,22 +423,24 @@ pub async fn db_mark_item_read(app_handle: AppHandle, item_id: i64, unread: bool
   ok
 }
 
+fn get_watch_list(db: &Connection) -> Result<Vec<String>> {
+  let mut stmt = db.prepare("SELECT keyword FROM watch_list")?;
+  let mut rows = stmt.query([])?;
+  let mut items = Vec::new();
+
+  while let Some(row) = rows.next()? {
+    let keyword: String = row.get(0)?;
+    items.push(keyword);
+  }
+
+  Ok(items)
+}
+
 /// 获取监视关键字列表。
 #[tauri::command]
 #[specta::specta]
 pub async fn db_get_watch_list(app_handle: AppHandle) -> Vec<String> {
-  let result = app_handle.db(|db| -> Result<Vec<String>> {
-    let mut stmt = db.prepare("SELECT keyword FROM watch_list")?;
-    let mut rows = stmt.query([])?;
-    let mut items = Vec::new();
-
-    while let Some(row) = rows.next()? {
-      let keyword: String = row.get(0)?;
-      items.push(keyword);
-    }
-
-    Ok(items)
-  });
+  let result = app_handle.db(get_watch_list);
 
   result.unwrap()
 
