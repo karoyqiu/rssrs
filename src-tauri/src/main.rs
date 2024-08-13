@@ -133,7 +133,7 @@ fn main() {
           show_main_window(app).unwrap();
         }
         "exit" => {
-          std::process::exit(0);
+          app.exit(0);
         }
         _ => {}
       },
