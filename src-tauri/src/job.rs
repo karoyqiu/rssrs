@@ -52,7 +52,7 @@ fn get_data(app_handle: &AppHandle) -> Result<(ProxySettings, Vec<Seed>)> {
 
 fn insert_items(app_handle: &AppHandle, seed_id: i64, items: &Vec<Item>) -> Result<()> {
   let db = initialize(app_handle, false)?;
-  let mut stmt = db.prepare("INSERT OR IGNORE INTO items (seed_id, guid, title, author, desc, link, pub_date, unread) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)")?;
+  let mut stmt = db.prepare("INSERT OR IGNORE INTO articles (seed_id, guid, title, author, desc, link, pub_date, unread) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)")?;
   let mut total = 0;
 
   for item in items {
