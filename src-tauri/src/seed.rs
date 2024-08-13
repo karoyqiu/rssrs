@@ -1,5 +1,4 @@
 use chrono::Local;
-use rusqlite::Row;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
