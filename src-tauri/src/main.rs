@@ -9,11 +9,11 @@ mod seed;
 
 use app_handle::set_app_handle;
 use db::{
-  db_add_watch_keyword, db_delete_watch_keyword, db_get_all_seeds, db_get_items, db_get_setting,
-  db_get_unread_count, db_get_watch_list, db_insert_seed, db_mark_item_read, db_read_all,
+  db_add_watch_keyword, db_delete_watch_keyword, db_get_all_seeds, db_get_articles, db_get_setting,
+  db_get_unread_count, db_get_watch_list, db_insert_seed, db_read_all, db_read_article,
   db_set_setting, initialize, AppState,
 };
-//use events::{SeedItemReadEvent, SeedUnreadCountEvent};
+//use events::{ArticleReadEvent, SeedUnreadCountEvent};
 use job::check_seeds;
 #[cfg(debug_assertions)]
 use specta::{collect_types, ts::BigIntExportBehavior};
@@ -31,7 +31,7 @@ fn export_bindings() {
 
   // println!(
   //   "{}",
-  //   specta::ts::export::<SeedItemReadEvent>(&config).unwrap()
+  //   specta::ts::export::<ArticleReadEvent>(&config).unwrap()
   // );
   // println!(
   //   "{}",
@@ -43,12 +43,12 @@ fn export_bindings() {
       db_add_watch_keyword,
       db_delete_watch_keyword,
       db_get_all_seeds,
-      db_get_items,
+      db_get_articles,
       db_get_setting,
       db_get_unread_count,
       db_get_watch_list,
       db_insert_seed,
-      db_mark_item_read,
+      db_read_article,
       db_read_all,
       db_set_setting
     ]
@@ -104,12 +104,12 @@ fn main() {
       db_add_watch_keyword,
       db_delete_watch_keyword,
       db_get_all_seeds,
-      db_get_items,
+      db_get_articles,
       db_get_setting,
       db_get_unread_count,
       db_get_watch_list,
       db_insert_seed,
-      db_mark_item_read,
+      db_read_article,
       db_read_all,
       db_set_setting
     ])

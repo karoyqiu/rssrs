@@ -1,7 +1,7 @@
 /**
- * 种子项未读事件
+ * 文章未读事件
  */
-export type SeedItemReadEvent = { id: number; unread: boolean };
+export type ArticleReadEvent = { id: number; unread: boolean };
 
 /**
  * 种子未读数量事件

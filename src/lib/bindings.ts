@@ -32,10 +32,10 @@ export function dbGetAllSeeds() {
 }
 
 /**
- * 获取项。
+ * 获取文章。
  */
-export function dbGetItems(filters: ItemFilters) {
-    return invoke()<ItemResult>("db_get_items", { filters })
+export function dbGetArticles(filters: ArticleFilters) {
+    return invoke()<ArticleResult>("db_get_articles", { filters })
 }
 
 /**
@@ -67,10 +67,10 @@ export function dbInsertSeed(name: string, url: string) {
 }
 
 /**
- * 将项标记为已读或未读。
+ * 将文章标记为已读或未读。
  */
-export function dbMarkItemRead(itemId: number, unread: boolean) {
-    return invoke()<boolean>("db_mark_item_read", { itemId,unread })
+export function dbReadArticle(itemId: number, read: boolean) {
+    return invoke()<boolean>("db_read_article", { itemId,read })
 }
 
 /**
@@ -87,13 +87,13 @@ export function dbSetSetting(key: string, value: string) {
     return invoke()<boolean>("db_set_setting", { key,value })
 }
 
-/**
- * 种子项
- */
-export type SeedItem = { id: number; seed_id: number; seed_name: string; title: string; author: string; desc: string | null; link: string; pub_date: number; unread: boolean }
-export type ItemResult = { items: SeedItem[]; nextCursor: string | null }
+export type ArticleResult = { articles: Article[]; nextCursor: string | null }
 /**
  * 种子
  */
 export type Seed = { id: number; name: string; url: string; favicon: string | null; interval: number; last_fetched_at: number; last_fetch_ok: boolean }
-export type ItemFilters = { seedId: number | null; cursor: string | null; limit: number | null }
+export type ArticleFilters = { seedId: number | null; cursor: string | null; limit: number | null }
+/**
+ * 文章
+ */
+export type Article = { id: number; seed_id: number; seed_name: string; title: string; author: string | null; desc: string | null; link: string; pub_date: number; unread: boolean }

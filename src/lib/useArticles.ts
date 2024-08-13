@@ -1,20 +1,20 @@
 import type { Event } from '@tauri-apps/api/event';
 import { unique } from 'radash';
 import { useCallback, useEffect, useState } from 'react';
-import { dbGetItems, SeedItem, type Seed } from './bindings';
-import type { SeedItemReadEvent } from './events';
+import { Article, dbGetArticles, type Seed } from './bindings';
+import type { ArticleReadEvent } from './events';
 import useEvent from './useEvent';
 
 const useItems = (seedId: Seed['id'] | null) => {
-  const [items, setItems] = useState<SeedItem[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [more, setMore] = useState(true);
 
   const loadMore = useCallback(async () => {
-    const result = await dbGetItems({ seedId, limit: null, cursor });
+    const result = await dbGetArticles({ seedId, limit: null, cursor });
 
-    setItems((old) =>
-      unique([...old, ...result.items], (item) => item.id).sort((a, b) => {
+    setArticles((old) =>
+      unique([...old, ...result.articles], (item) => item.id).sort((a, b) => {
         let diff = b.pub_date - a.pub_date;
 
         if (diff !== 0) {
@@ -30,7 +30,7 @@ const useItems = (seedId: Seed['id'] | null) => {
   }, [seedId, cursor]);
 
   const reload = useCallback(() => {
-    setItems([]);
+    setArticles([]);
     setCursor(null);
     setMore(true);
     loadMore();
@@ -39,8 +39,8 @@ const useItems = (seedId: Seed['id'] | null) => {
   useEffect(reload, [seedId]);
 
   const readHandler = useCallback(
-    ({ payload }: Event<SeedItemReadEvent>) => {
-      setItems((old) => {
+    ({ payload }: Event<ArticleReadEvent>) => {
+      setArticles((old) => {
         if (payload.id > 0) {
           const idx = old.findIndex((item) => item.id === payload.id);
 
@@ -55,12 +55,12 @@ const useItems = (seedId: Seed['id'] | null) => {
         }
       });
     },
-    [setItems],
+    [setArticles],
   );
 
-  useEvent('app://item/unread', readHandler);
+  useEvent('app://article/unread', readHandler);
 
-  return { items, more, loadMore, reload };
+  return { articles, more, loadMore, reload };
 };
 
 export default useItems;

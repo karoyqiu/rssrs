@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useLocalStorage } from 'usehooks-ts';
 
 import AddSeedDialog from '@/components/AddSeedDialog';
-import ItemList from '@/components/ItemList';
+import ArticleList from '@/components/ArticleList';
 import SeedToggleItem from '@/components/SeedToggleItem';
 import SettingsDialog from '@/components/SettingsDialog';
 import { Button } from '@/components/ui/button';
@@ -83,7 +83,7 @@ function App() {
           </Button>
         </div>
         <ScrollArea className="w-full @container">
-          <ItemList seedId={seedId === 0 ? null : seedId} />
+          <ArticleList seedId={seedId === 0 ? null : seedId} />
         </ScrollArea>
       </ResizablePanel>
     </ResizablePanelGroup>

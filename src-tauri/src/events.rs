@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
-/// 种子项未读事件
+/// 文章未读事件
 #[derive(Debug, Clone, Deserialize, Serialize, Type)]
-pub struct SeedItemReadEvent {
-  /// 项 ID
+pub struct ArticleReadEvent {
+  /// 文章 ID
   pub id: i64,
   /// 是否未读
   pub unread: bool,
