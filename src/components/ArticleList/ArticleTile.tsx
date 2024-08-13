@@ -49,7 +49,7 @@ export default function ItemTile(props: ItemTileProps) {
         <Highlighter
           searchWords={keywords}
           autoEscape
-          textToHighlight={article.title}
+          textToHighlight={article.title ?? ''}
           className={cn(
             'w-full cursor-pointer',
             article.unread ? 'font-bold' : 'text-muted-foreground',

@@ -54,7 +54,7 @@ pub struct Article {
   /// 种子名称
   pub seed_name: String,
   /// 标题
-  pub title: String,
+  pub title: Option<String>,
   /// 作者
   pub author: Option<String>,
   /// 描述
