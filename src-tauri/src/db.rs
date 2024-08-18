@@ -1,5 +1,6 @@
 use std::vec;
 
+use chrono::{Days, Local};
 use log::info;
 use rusqlite::types::Value;
 use rusqlite::{params, params_from_iter, Connection, OpenFlags, Result, Row};
@@ -7,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::{AppHandle, Manager, State};
 
+use crate::app_handle::get_app_handle;
 use crate::events::{ArticleReadEvent, SeedUnreadCountEvent};
 use crate::seed::{Article, Seed};
 
@@ -64,12 +66,15 @@ pub fn initialize(app_handle: &AppHandle, readonly: bool) -> Result<Connection> 
     OpenFlags::default()
   };
   let mut db = Connection::open_with_flags(sqlite_path, flags)?;
+  db.pragma_update(None, "journal_mode", "WAL")?;
+  db.pragma_update(None, "synchronous", "NORMAL")?;
+  db.pragma_update(None, "foreign_keys", "ON")?;
+  db.pragma_update(None, "optimize", 0x10002)?;
 
   let mut user_pragma = db.prepare("PRAGMA user_version")?;
   let existing_user_version: u32 = user_pragma.query_row([], |row| Ok(row.get(0)?))?;
   drop(user_pragma);
 
-  db.execute("PRAGMA foreign_keys = ON", [])?;
   upgrade_if_needed(&mut db, existing_user_version)?;
 
   Ok(db)
@@ -78,8 +83,6 @@ pub fn initialize(app_handle: &AppHandle, readonly: bool) -> Result<Connection> 
 /// Upgrades the database to the current version.
 fn upgrade_if_needed(db: &mut Connection, existing_version: u32) -> Result<()> {
   if existing_version < CURRENT_DB_VERSION {
-    db.pragma_update(None, "journal_mode", "WAL")?;
-
     let tx = db.transaction()?;
 
     tx.pragma_update(None, "user_version", CURRENT_DB_VERSION)?;
@@ -115,6 +118,7 @@ fn upgrade_if_needed(db: &mut Connection, existing_version: u32) -> Result<()> {
         id INTEGER PRIMARY KEY,
         keyword TEXT NOT NULL UNIQUE
       );
+      PRAGMA optimize;
       ",
     )?;
 
@@ -122,6 +126,24 @@ fn upgrade_if_needed(db: &mut Connection, existing_version: u32) -> Result<()> {
   }
 
   Ok(())
+}
+
+/// 执行数据库优化
+pub fn optimize() {
+  let app_handle = get_app_handle();
+
+  if let Some(app_handle) = app_handle {
+    let _ = app_handle.db(|db| -> Result<()> {
+      let now = Local::now();
+      let deadline = now.checked_sub_days(Days::new(30)).unwrap().timestamp();
+      db.execute(
+        "DELETE FROM articles WHERE unread = ?1 AND pub_date < ?2",
+        [0, deadline],
+      )?;
+      db.execute_batch("PRAGMA optimize;")?;
+      Ok(())
+    });
+  }
 }
 
 /// 插入种子。

@@ -11,7 +11,7 @@ use app_handle::set_app_handle;
 use db::{
   db_add_watch_keyword, db_delete_watch_keyword, db_get_all_seeds, db_get_articles, db_get_setting,
   db_get_unread_count, db_get_watch_list, db_insert_seed, db_read_all, db_read_article,
-  db_set_setting, initialize, AppState,
+  db_set_setting, initialize, optimize, AppState,
 };
 //use events::{ArticleReadEvent, SeedUnreadCountEvent};
 use job::check_seeds;
@@ -87,6 +87,12 @@ fn main() {
   });
 
   spawn(task);
+
+  // 每小时优化一次数据库
+  let optimze_task = every(1).hour().perform(|| async {
+    optimize();
+  });
+  spawn(optimze_task);
 
   let exit = CustomMenuItem::new("exit".to_string(), "Exit");
   let show = CustomMenuItem::new("show".to_string(), "Show");
