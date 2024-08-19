@@ -69,7 +69,10 @@ pub fn initialize(app_handle: &AppHandle, readonly: bool) -> Result<Connection> 
   db.pragma_update(None, "journal_mode", "WAL")?;
   db.pragma_update(None, "synchronous", "NORMAL")?;
   db.pragma_update(None, "foreign_keys", "ON")?;
-  db.pragma_update(None, "optimize", 0x10002)?;
+
+  if !readonly {
+    db.pragma_update(None, "optimize", 0x10002)?;
+  }
 
   let mut user_pragma = db.prepare("PRAGMA user_version")?;
   let existing_user_version: u32 = user_pragma.query_row([], |row| Ok(row.get(0)?))?;
