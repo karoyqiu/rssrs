@@ -1,5 +1,5 @@
 use anyhow::Result;
-use chrono::{DateTime, Local};
+use chrono::{DateTime, Days, Local};
 use log::info;
 use reqwest::Proxy;
 use rss::{Channel, Item};
@@ -54,6 +54,8 @@ fn insert_items(app_handle: &AppHandle, seed_id: i64, items: &Vec<Item>) -> Resu
   let db = initialize(app_handle, false)?;
   let mut stmt = db.prepare("INSERT OR IGNORE INTO articles (seed_id, guid, title, author, desc, link, pub_date, unread) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)")?;
   let mut total = 0;
+  let now = Local::now();
+  let deadline = now.checked_sub_days(Days::new(30)).unwrap();
 
   for item in items {
     let guid = if let Some(guid) = &item.guid {
@@ -64,18 +66,21 @@ fn insert_items(app_handle: &AppHandle, seed_id: i64, items: &Vec<Item>) -> Resu
 
     if let Some(date) = &item.pub_date {
       let date = DateTime::parse_from_rfc2822(date.as_str())?;
-      let date = date.timestamp();
-      let inserted = stmt.execute(params![
-        seed_id,
-        guid,
-        item.title,
-        item.author,
-        item.description,
-        item.link,
-        date,
-        true,
-      ])?;
-      total += inserted;
+
+      if date > deadline {
+        let date = date.timestamp();
+        let inserted = stmt.execute(params![
+          seed_id,
+          guid,
+          item.title,
+          item.author,
+          item.description,
+          item.link,
+          date,
+          true,
+        ])?;
+        total += inserted;
+      }
     };
   }
 
