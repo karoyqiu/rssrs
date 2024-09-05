@@ -2,6 +2,35 @@ type ItemCoverProps = {
   desc: string | null;
 };
 
+const blackList = ['https://m.av28.tv'];
+
+const findProp = (desc: string, imgStart: number, imgEnd: number, prop: string) => {
+  const search = `${prop}="`;
+  const start = desc.indexOf(search, imgStart);
+
+  if (start < 0 || start >= imgEnd) {
+    return null;
+  }
+
+  const end = desc.indexOf('"', start + search.length);
+  const value = desc.substring(start + search.length, end);
+  return value;
+};
+
+const findDataLink = (desc: string, imgStart: number, imgEnd: number) => {
+  const dataLink = findProp(desc, imgStart, imgEnd, 'data-link');
+
+  if (!dataLink) {
+    return null;
+  }
+
+  if (blackList.includes(dataLink.toLowerCase())) {
+    return 'block';
+  }
+
+  return 'maybe';
+};
+
 export default function ItemCover(props: ItemCoverProps) {
   const { desc } = props;
 
@@ -17,20 +46,13 @@ export default function ItemCover(props: ItemCoverProps) {
     if (imgStart >= 0) {
       const imgEnd = desc.indexOf('>', imgStart);
 
-      // 将带 data-link 的视为广告
-      const dataLink = desc.indexOf('data-link', imgStart);
+      const src = findProp(desc, imgStart, imgEnd, 'src');
 
-      const srcStart = desc.indexOf('src="', imgStart);
+      if (src) {
+        const dataLink = findDataLink(desc, imgStart, imgEnd);
 
-      if (srcStart >= 0) {
-        const srcEnd = desc.indexOf('"', srcStart + 5);
-
-        if (srcEnd >= 0) {
-          const src = desc.substring(srcStart + 5, srcEnd);
-
-          if (dataLink < 0 || dataLink > imgEnd || !src.endsWith('.gif')) {
-            return <img src={src} decoding="async" loading="lazy" />;
-          }
+        if (!dataLink) {
+          return <img src={src} decoding="async" loading="lazy" />;
         }
       }
 
