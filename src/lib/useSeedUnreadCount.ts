@@ -13,7 +13,7 @@ const useSeedUnreadCount = (seedId: Seed['id'] | null) => {
 
   const unreadHandler = useCallback(
     ({ payload }: Event<SeedUnreadCountEvent>) => {
-      if (payload.id === seedId) {
+      if (payload.id === seedId || (!payload.id && payload.unreadCount === 0)) {
         setUnread(payload.unreadCount);
       }
     },
