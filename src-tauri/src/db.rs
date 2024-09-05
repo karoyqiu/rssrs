@@ -1,7 +1,7 @@
 use std::vec;
 
 use chrono::{Days, Local};
-use log::info;
+use log::{info, trace};
 use rusqlite::types::Value;
 use rusqlite::{params, params_from_iter, Connection, OpenFlags, Result, Row};
 use serde::{Deserialize, Serialize};
@@ -271,6 +271,7 @@ pub struct ArticleFilters {
   pub seed_id: Option<i64>,
   pub cursor: Option<String>,
   pub limit: Option<i32>,
+  pub search: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Type)]
@@ -302,13 +303,29 @@ fn get_articles_with(
   params.insert(0, Value::Integer(id));
   params.insert(0, Value::Integer(pub_date));
 
-  let query = if let Some(q) = query {
+  let mut query = if let Some(q) = query {
     format!("AND ({})", q)
   } else {
     String::default()
   };
+
+  if let Some(search) = &filters.search {
+    if !search.is_empty() {
+      let search_query = format!(" AND instr(title, ?{}) > 0", params.len() + 1);
+      query.push_str(&search_query);
+      params.push(Value::Text(search.to_owned()));
+    }
+  }
+
   let sql = format!("SELECT articles.*, seeds.name FROM articles LEFT JOIN seeds ON articles.seed_id = seeds.id WHERE (pub_date < ?1 OR (pub_date = ?1 AND articles.id >= ?2)) AND unread != ?3 {} ORDER BY pub_date DESC, articles.id ASC LIMIT ?4", query);
   let mut stmt = db.prepare(&sql)?;
+
+  #[cfg(debug_assertions)]
+  {
+    trace!("SQL: {}", &sql);
+    trace!("PARAMS: {:?}", &params);
+  }
+
   let mut rows = stmt.query(params_from_iter(params))?;
   let mut articles = Vec::new();
 

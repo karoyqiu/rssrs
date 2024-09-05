@@ -92,7 +92,7 @@ export function dbSetSetting(key: string, value: string) {
  */
 export type Article = { id: number; seed_id: number; seed_name: string; title: string | null; author: string | null; desc: string | null; link: string; pub_date: number; unread: boolean }
 export type ArticleResult = { articles: Article[]; nextCursor: string | null }
-export type ArticleFilters = { seedId: number | null; cursor: string | null; limit: number | null }
+export type ArticleFilters = { seedId: number | null; cursor: string | null; limit: number | null; search: string | null }
 /**
  * 种子
  */

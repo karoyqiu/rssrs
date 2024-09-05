@@ -1,7 +1,7 @@
 import { appWindow } from '@tauri-apps/api/window';
-import { EyeIcon, PlusIcon, SettingsIcon } from 'lucide-react';
+import { EyeIcon, PlusIcon, SearchIcon, SettingsIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useLocalStorage } from 'usehooks-ts';
+import { useDebounceValue, useLocalStorage } from 'usehooks-ts';
 
 import AddSeedDialog from '@/components/AddSeedDialog';
 import ArticleList from '@/components/ArticleList';
@@ -17,9 +17,11 @@ import { dbReadAll } from '@/lib/bindings';
 import useSeeds from '@/lib/useSeeds';
 
 import '@/globals.css';
+import { Input } from './components/ui/input';
 
 function App() {
   const [seedId, setSeedId] = useState(0);
+  const [search, setSearch] = useDebounceValue('', 500);
   const [autoRead, setAutoRead] = useLocalStorage('autoRead', true);
   const { seeds } = useSeeds();
 
@@ -81,9 +83,18 @@ function App() {
           <Button disabled={seedId < 0} onClick={() => dbReadAll(seedId)}>
             Read all
           </Button>
+          <div className="relative flex-1">
+            <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              className="pl-10"
+              type="search"
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search"
+            />
+          </div>
         </div>
         <ScrollArea className="w-full @container">
-          <ArticleList seedId={seedId === 0 ? null : seedId} />
+          <ArticleList seedId={seedId === 0 ? null : seedId} search={search} />
         </ScrollArea>
       </ResizablePanel>
     </ResizablePanelGroup>

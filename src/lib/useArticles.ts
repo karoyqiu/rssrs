@@ -1,42 +1,45 @@
 import type { Event } from '@tauri-apps/api/event';
 import { unique } from 'radash';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Article, dbGetArticles, type Seed } from './bindings';
 import type { ArticleReadEvent } from './events';
 import useEvent from './useEvent';
 
-const useItems = (seedId: Seed['id'] | null) => {
+const useItems = (seedId: Seed['id'] | null, search: string | null) => {
   const [articles, setArticles] = useState<Article[]>([]);
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [more, setMore] = useState(true);
+  const cursor = useRef<string | null>(null);
+  const more = useRef<boolean>(true);
 
   const loadMore = useCallback(async () => {
-    const result = await dbGetArticles({ seedId, limit: null, cursor });
+    const result = await dbGetArticles({ seedId, limit: null, cursor: cursor.current, search });
 
-    setArticles((old) =>
-      unique([...old, ...result.articles], (item) => item.id).sort((a, b) => {
-        let diff = b.pub_date - a.pub_date;
+    if (cursor.current === null && more.current) {
+      setArticles(result.articles);
+    } else {
+      setArticles((old) =>
+        unique([...old, ...result.articles], (item) => item.id).sort((a, b) => {
+          let diff = b.pub_date - a.pub_date;
 
-        if (diff !== 0) {
-          return diff;
-        }
+          if (diff !== 0) {
+            return diff;
+          }
 
-        return a.id - b.id;
-      }),
-    );
+          return a.id - b.id;
+        }),
+      );
+    }
 
-    setCursor(result.nextCursor);
-    setMore(!!result.nextCursor);
-  }, [seedId, cursor]);
+    cursor.current = result.nextCursor;
+    more.current = !!result.nextCursor;
+  }, [seedId, search]);
 
   const reload = useCallback(() => {
-    setArticles([]);
-    setCursor(null);
-    setMore(true);
+    cursor.current = null;
+    more.current = true;
     loadMore();
   }, [loadMore]);
 
-  useEffect(reload, [seedId]);
+  useEffect(reload, [loadMore]);
 
   const readHandler = useCallback(
     ({ payload }: Event<ArticleReadEvent>) => {

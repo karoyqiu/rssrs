@@ -11,11 +11,12 @@ import ItemTile from './ArticleTile';
 
 type ItemListProps = {
   seedId: Seed['id'] | null;
+  search: string | null;
 };
 
 export default function ItemList(props: ItemListProps) {
-  const { seedId } = props;
-  const { articles, more, loadMore, reload } = useArticles(seedId);
+  const { seedId, search } = props;
+  const { articles, more, loadMore, reload } = useArticles(seedId, search);
   const { ref } = useIntersectionObserver({
     threshold: 0,
     onChange: (isIntersecting) => {
@@ -49,7 +50,11 @@ export default function ItemList(props: ItemListProps) {
 
   useEffect(() => {
     topRef.current?.scrollIntoView();
-  }, [seedId]);
+  }, [seedId, search]);
+
+  useEffect(() => {
+    console.log(`Articles count: ${articles.length}`);
+  }, [articles.length]);
 
   return (
     <>
