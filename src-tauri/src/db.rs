@@ -23,9 +23,9 @@ pub trait DbAccess {
   where
     F: FnOnce(&Connection) -> TResult;
 
-  // fn db_mut<F, TResult>(&self, operation: F) -> TResult
-  // where
-  //   F: FnOnce(&mut Connection) -> TResult;
+  fn db_mut<F, TResult>(&self, operation: F) -> TResult
+  where
+    F: FnOnce(&mut Connection) -> TResult;
 }
 
 impl DbAccess for AppHandle {
@@ -40,16 +40,16 @@ impl DbAccess for AppHandle {
     operation(db)
   }
 
-  // fn db_mut<F, TResult>(&self, operation: F) -> TResult
-  // where
-  //   F: FnOnce(&mut Connection) -> TResult,
-  // {
-  //   let app_state: State<AppState> = self.state();
-  //   let mut db_connection_guard = app_state.db.lock().unwrap();
-  //   let db = db_connection_guard.as_mut().unwrap();
+  fn db_mut<F, TResult>(&self, operation: F) -> TResult
+  where
+    F: FnOnce(&mut Connection) -> TResult,
+  {
+    let app_state: State<AppState> = self.state();
+    let mut db_connection_guard = app_state.db.lock().unwrap();
+    let db = db_connection_guard.as_mut().unwrap();
 
-  //   operation(db)
-  // }
+    operation(db)
+  }
 }
 
 pub fn initialize(app_handle: &AppHandle, readonly: bool) -> Result<Connection> {

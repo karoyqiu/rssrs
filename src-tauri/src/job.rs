@@ -1,6 +1,6 @@
 use anyhow::Result;
 use chrono::{DateTime, Days, Local};
-use log::info;
+use log::{info, warn};
 use reqwest::Proxy;
 use rss::{Channel, Item};
 use rusqlite::{params, Connection};
@@ -51,68 +51,69 @@ fn get_data(app_handle: &AppHandle) -> Result<(ProxySettings, Vec<Seed>)> {
 }
 
 fn insert_items(app_handle: &AppHandle, seed_id: i64, items: &Vec<Item>) -> Result<()> {
-  let mut db = initialize(app_handle, false)?;
-  let tx = db.transaction()?;
-  let mut total = 0;
+  app_handle.db_mut(|db| -> Result<()> {
+    let tx = db.transaction()?;
+    let mut total = 0;
 
-  {
-    let mut stmt = tx.prepare("INSERT OR IGNORE INTO articles (seed_id, guid, title, author, desc, link, pub_date, unread) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)")?;
-    let now = Local::now();
-    let deadline = now.checked_sub_days(Days::new(30)).unwrap();
+    {
+      let mut stmt = tx.prepare("INSERT OR IGNORE INTO articles (seed_id, guid, title, author, desc, link, pub_date, unread) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)")?;
+      let now = Local::now();
+      let deadline = now.checked_sub_days(Days::new(30)).unwrap();
 
-    for item in items {
-      let guid = if let Some(guid) = &item.guid {
-        Some(guid.value.clone())
-      } else {
-        None
-      };
+      for item in items {
+        let guid = if let Some(guid) = &item.guid {
+          Some(guid.value.clone())
+        } else {
+          None
+        };
 
-      if let Some(date) = &item.pub_date {
-        let date = DateTime::parse_from_rfc2822(date.as_str())?;
+        if let Some(date) = &item.pub_date {
+          let date = DateTime::parse_from_rfc2822(date.as_str())?;
 
-        if date > deadline {
-          let date = date.timestamp();
-          let inserted = stmt.execute(params![
-            seed_id,
-            guid,
-            item.title,
-            item.author,
-            item.description,
-            item.link,
-            date,
-            true,
-          ])?;
-          total += inserted;
-        }
-      };
+          if date > deadline {
+            let date = date.timestamp();
+            let inserted = stmt.execute(params![
+              seed_id,
+              guid,
+              item.title,
+              item.author,
+              item.description,
+              item.link,
+              date,
+              true,
+            ])?;
+            total += inserted;
+          }
+        };
+      }
     }
-  }
 
-  tx.commit()?;
+    tx.commit()?;
 
-  if total > 0 {
-    info!("{total} new articles");
-    app_handle
-      .emit_all(
-        "app://seed/new",
-        SeedUnreadCountEvent {
-          id: Some(seed_id),
-          unread_count: total as i32,
-        },
-      )
-      .unwrap();
-    app_handle
-      .emit_all(
-        "app://seed/new",
-        SeedUnreadCountEvent {
-          id: None,
-          unread_count: total as i32,
-        },
-      )
-      .unwrap();
-  }
+    if total > 0 {
+      info!("{total} new articles");
+      app_handle
+        .emit_all(
+          "app://seed/new",
+          SeedUnreadCountEvent {
+            id: Some(seed_id),
+            unread_count: total as i32,
+          },
+        )
+        .unwrap();
+      app_handle
+        .emit_all(
+          "app://seed/new",
+          SeedUnreadCountEvent {
+            id: None,
+            unread_count: total as i32,
+          },
+        )
+        .unwrap();
+    }
 
-  Ok(())
+    Ok(())
+  })
 }
 
 async fn fetch(app_handle: &AppHandle, proxy: &ProxySettings, seed: &Seed) -> Result<()> {
@@ -129,7 +130,7 @@ async fn fetch(app_handle: &AppHandle, proxy: &ProxySettings, seed: &Seed) -> Re
     _ => {}
   }
 
-  let client = client.build()?;
+  let client = client.timeout(std::time::Duration::from_secs(30)).build()?;
   let content = client.get(&seed.url).send().await?.bytes().await?;
   let channel = Channel::read_from(&content[..])?;
   insert_items(app_handle, seed.id, &channel.items)?;
@@ -154,8 +155,12 @@ pub async fn check_seeds() -> Result<()> {
     for seed in seeds {
       if seed.should_fetch() {
         // 抓取
-        let result = fetch(&app_handle, &proxy, &seed).await;
-        save_last_fetch(&app_handle, seed.id, result.is_ok())?;
+        if let Err(err) = fetch(&app_handle, &proxy, &seed).await {
+          warn!("Failed to fetch {}: {:?}", &seed.name, err);
+          save_last_fetch(&app_handle, seed.id, false)?;
+        } else {
+          save_last_fetch(&app_handle, seed.id, true)?;
+        }
       }
     }
   }
