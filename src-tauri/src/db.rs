@@ -67,6 +67,7 @@ pub fn initialize(app_handle: &AppHandle, readonly: bool) -> Result<Connection> 
   };
   let mut db = Connection::open_with_flags(sqlite_path, flags)?;
   db.pragma_update(None, "journal_mode", "WAL")?;
+  db.pragma_update(None, "journal_size_limit", "6144000")?;
   db.pragma_update(None, "synchronous", "NORMAL")?;
   db.pragma_update(None, "foreign_keys", "ON")?;
 
@@ -143,7 +144,7 @@ pub fn optimize() {
         "DELETE FROM articles WHERE unread = ?1 AND pub_date < ?2",
         [0, deadline],
       )?;
-      db.execute_batch("PRAGMA optimize;")?;
+      db.execute_batch("PRAGMA optimize; VACUUM; PRAGMA wal_checkpoint(truncate);")?;
       Ok(())
     });
   }

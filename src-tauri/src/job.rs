@@ -9,7 +9,7 @@ use tauri::{AppHandle, Manager};
 
 use crate::{
   app_handle::get_app_handle,
-  db::{get_all_seeds, initialize},
+  db::{get_all_seeds, initialize, DbAccess},
   events::SeedUnreadCountEvent,
   seed::Seed,
 };
@@ -51,38 +51,44 @@ fn get_data(app_handle: &AppHandle) -> Result<(ProxySettings, Vec<Seed>)> {
 }
 
 fn insert_items(app_handle: &AppHandle, seed_id: i64, items: &Vec<Item>) -> Result<()> {
-  let db = initialize(app_handle, false)?;
-  let mut stmt = db.prepare("INSERT OR IGNORE INTO articles (seed_id, guid, title, author, desc, link, pub_date, unread) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)")?;
+  let mut db = initialize(app_handle, false)?;
+  let tx = db.transaction()?;
   let mut total = 0;
-  let now = Local::now();
-  let deadline = now.checked_sub_days(Days::new(30)).unwrap();
 
-  for item in items {
-    let guid = if let Some(guid) = &item.guid {
-      Some(guid.value.clone())
-    } else {
-      None
-    };
+  {
+    let mut stmt = tx.prepare("INSERT OR IGNORE INTO articles (seed_id, guid, title, author, desc, link, pub_date, unread) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)")?;
+    let now = Local::now();
+    let deadline = now.checked_sub_days(Days::new(30)).unwrap();
 
-    if let Some(date) = &item.pub_date {
-      let date = DateTime::parse_from_rfc2822(date.as_str())?;
+    for item in items {
+      let guid = if let Some(guid) = &item.guid {
+        Some(guid.value.clone())
+      } else {
+        None
+      };
 
-      if date > deadline {
-        let date = date.timestamp();
-        let inserted = stmt.execute(params![
-          seed_id,
-          guid,
-          item.title,
-          item.author,
-          item.description,
-          item.link,
-          date,
-          true,
-        ])?;
-        total += inserted;
-      }
-    };
+      if let Some(date) = &item.pub_date {
+        let date = DateTime::parse_from_rfc2822(date.as_str())?;
+
+        if date > deadline {
+          let date = date.timestamp();
+          let inserted = stmt.execute(params![
+            seed_id,
+            guid,
+            item.title,
+            item.author,
+            item.description,
+            item.link,
+            date,
+            true,
+          ])?;
+          total += inserted;
+        }
+      };
+    }
   }
+
+  tx.commit()?;
 
   if total > 0 {
     info!("{total} new articles");
