@@ -314,6 +314,7 @@ fn get_articles_with(
       let search_query = format!(" AND instr(title, ?{}) > 0", params.len() + 1);
       query.push_str(&search_query);
       params.push(Value::Text(search.to_owned()));
+      params[2] = Value::Integer(-1); // read
     }
   }
 
