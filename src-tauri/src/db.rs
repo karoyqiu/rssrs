@@ -166,6 +166,27 @@ pub async fn db_insert_seed(app_handle: AppHandle, name: String, url: String) ->
   result.is_ok()
 }
 
+/// 更新种子。
+#[tauri::command]
+#[specta::specta]
+pub async fn db_update_seed(
+  app_handle: AppHandle,
+  seed_id: i64,
+  name: String,
+  url: String,
+) -> bool {
+  let result = app_handle.db(|db| -> Result<()> {
+    let mut stmt = db.prepare("UPDATE seeds SET name = ?1, url = ?2 WHERE id = ?3")?;
+    stmt.execute(params![name, url, seed_id])?;
+
+    app_handle.emit_all("app://seed/add", ()).unwrap();
+
+    Ok(())
+  });
+
+  result.is_ok()
+}
+
 /// 将行转换为 Seed
 fn to_seed(row: &Row) -> Result<Seed> {
   Ok(Seed {

@@ -11,22 +11,21 @@ use app_handle::set_app_handle;
 use db::{
   db_add_watch_keyword, db_delete_watch_keyword, db_get_all_seeds, db_get_articles, db_get_setting,
   db_get_unread_count, db_get_watch_list, db_insert_seed, db_read_all, db_read_article,
-  db_set_setting, initialize, optimize, AppState,
+  db_set_setting, db_update_seed, initialize, optimize, AppState,
 };
 //use events::{ArticleReadEvent, SeedUnreadCountEvent};
 use job::check_seeds;
-#[cfg(debug_assertions)]
-use specta::{collect_types, ts::BigIntExportBehavior};
 use tauri::{
   async_runtime::spawn, AppHandle, CustomMenuItem, Manager, State, SystemTray, SystemTrayEvent,
   SystemTrayMenu, SystemTrayMenuItem, WindowBuilder,
 };
-#[cfg(debug_assertions)]
-use tauri_specta::ts;
 use tokio_schedule::{every, Job};
 
 #[cfg(debug_assertions)]
 fn export_bindings() {
+  use specta::{collect_types, ts::BigIntExportBehavior};
+  use tauri_specta::ts;
+
   let config = specta::ts::ExportConfiguration::new().bigint(BigIntExportBehavior::Number);
 
   // println!(
@@ -50,7 +49,8 @@ fn export_bindings() {
       db_insert_seed,
       db_read_article,
       db_read_all,
-      db_set_setting
+      db_set_setting,
+      db_update_seed,
     ]
     .unwrap(),
     config,
@@ -117,7 +117,8 @@ fn main() {
       db_insert_seed,
       db_read_article,
       db_read_all,
-      db_set_setting
+      db_set_setting,
+      db_update_seed,
     ])
     .setup(|app| {
       let handle = app.handle();
