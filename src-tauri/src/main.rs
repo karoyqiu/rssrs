@@ -100,6 +100,12 @@ fn main() {
     .add_item(show)
     .add_native_item(SystemTrayMenuItem::Separator)
     .add_item(exit);
+
+  #[cfg(debug_assertions)]
+  let tray = SystemTray::new()
+    .with_tooltip("RSS Dev")
+    .with_menu(tray_menu);
+  #[cfg(not(debug_assertions))]
   let tray = SystemTray::new().with_tooltip("RSS").with_menu(tray_menu);
 
   tauri::Builder::default()
