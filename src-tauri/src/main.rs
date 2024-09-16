@@ -13,7 +13,6 @@ use db::{
   db_get_unread_count, db_get_watch_list, db_insert_seed, db_read_all, db_read_article,
   db_set_setting, db_update_seed, initialize, optimize, AppState,
 };
-//use events::{ArticleReadEvent, SeedUnreadCountEvent};
 use job::check_seeds;
 use tauri::{
   async_runtime::spawn, AppHandle, CustomMenuItem, Manager, State, SystemTray, SystemTrayEvent,
@@ -23,6 +22,7 @@ use tokio_schedule::{every, Job};
 
 #[cfg(debug_assertions)]
 fn export_bindings() {
+  //use job::GenericSettings;
   use specta::{collect_types, ts::BigIntExportBehavior};
   use tauri_specta::ts;
 
@@ -30,11 +30,7 @@ fn export_bindings() {
 
   // println!(
   //   "{}",
-  //   specta::ts::export::<ArticleReadEvent>(&config).unwrap()
-  // );
-  // println!(
-  //   "{}",
-  //   specta::ts::export::<SeedUnreadCountEvent>(&config).unwrap()
+  //   specta::ts::export::<GenericSettings>(&config).unwrap()
   // );
 
   ts::export_with_cfg(

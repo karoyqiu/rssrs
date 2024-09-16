@@ -1,10 +1,11 @@
 use anyhow::Result;
 use chrono::{DateTime, Days, Local};
-use log::{info, warn};
+use log::{debug, info, warn};
 use reqwest::Proxy;
 use rss::{Channel, Item};
 use rusqlite::{params, Connection};
 use serde::Deserialize;
+use specta::Type;
 use tauri::{AppHandle, Manager};
 
 use crate::{
@@ -14,12 +15,20 @@ use crate::{
   seed::Seed,
 };
 
+/// 代理设置
 #[derive(Debug, Deserialize)]
 struct ProxySettings {
   #[serde(rename = "type")]
   t: String,
   host: String,
   port: u16,
+}
+
+/// 一般设置
+#[derive(Debug, Deserialize, Type)]
+pub struct GenericSettings {
+  /// 请求超时时间，秒
+  pub timeout: u32,
 }
 
 /// 获取代理设置
@@ -40,14 +49,31 @@ fn get_proxy(db: &Connection) -> Result<ProxySettings> {
   }
 }
 
-fn get_data(app_handle: &AppHandle) -> Result<(ProxySettings, Vec<Seed>)> {
+fn get_generic_settings(db: &Connection) -> Result<GenericSettings> {
+  let mut stmt = db.prepare("SELECT value FROM settings WHERE key = ?1")?;
+  let mut rows = stmt.query(["generic"])?;
+
+  if let Some(row) = rows.next()? {
+    let value: String = row.get("value")?;
+    let proxy: GenericSettings = serde_json::from_str(value.as_str())?;
+    Ok(proxy)
+  } else {
+    Ok(GenericSettings { timeout: 30 })
+  }
+}
+
+fn get_data(app_handle: &AppHandle) -> Result<(ProxySettings, GenericSettings, Vec<Seed>)> {
   // 打开数据库
   let db = initialize(app_handle, true)?;
 
   let proxy = get_proxy(&db)?;
+  let generic = get_generic_settings(&db)?;
   let seeds = get_all_seeds(&db)?;
 
-  Ok((proxy, seeds))
+  #[cfg(debug_assertions)]
+  debug!("Settings: {:?}, {:?}", &proxy, &generic);
+
+  Ok((proxy, generic, seeds))
 }
 
 fn insert_items(app_handle: &AppHandle, seed_id: i64, items: &Vec<Item>) -> Result<()> {
@@ -116,7 +142,12 @@ fn insert_items(app_handle: &AppHandle, seed_id: i64, items: &Vec<Item>) -> Resu
   })
 }
 
-async fn fetch(app_handle: &AppHandle, proxy: &ProxySettings, seed: &Seed) -> Result<()> {
+async fn fetch(
+  app_handle: &AppHandle,
+  proxy: &ProxySettings,
+  generic: &GenericSettings,
+  seed: &Seed,
+) -> Result<()> {
   info!("Fetching {}", &seed.name);
   let mut client = reqwest::Client::builder();
 
@@ -130,7 +161,9 @@ async fn fetch(app_handle: &AppHandle, proxy: &ProxySettings, seed: &Seed) -> Re
     _ => {}
   }
 
-  let client = client.timeout(std::time::Duration::from_secs(30)).build()?;
+  let client = client
+    .timeout(std::time::Duration::from_secs(generic.timeout.into()))
+    .build()?;
   let content = client.get(&seed.url).send().await?.bytes().await?;
   let channel = Channel::read_from(&content[..])?;
   insert_items(app_handle, seed.id, &channel.items)?;
@@ -150,12 +183,12 @@ fn save_last_fetch(app_handle: &AppHandle, seed_id: i64, ok: bool) -> Result<()>
 pub async fn check_seeds() -> Result<()> {
   if let Some(app_handle) = get_app_handle() {
     // 读取代理设置和种子
-    let (proxy, seeds) = get_data(&app_handle)?;
+    let (proxy, generic, seeds) = get_data(&app_handle)?;
 
     for seed in seeds {
       if seed.should_fetch() {
         // 抓取
-        if let Err(err) = fetch(&app_handle, &proxy, &seed).await {
+        if let Err(err) = fetch(&app_handle, &proxy, &generic, &seed).await {
           warn!("Failed to fetch {}: {:?}", &seed.name, err);
           save_last_fetch(&app_handle, seed.id, false)?;
         } else {
