@@ -165,10 +165,20 @@ async fn fetch(
     .timeout(std::time::Duration::from_secs(generic.timeout.into()))
     .build()?;
   let content = client.get(&seed.url).send().await?.bytes().await?;
-  let channel = Channel::read_from(&content[..])?;
-  insert_items(app_handle, seed.id, &channel.items)?;
 
+  // #[cfg(debug_assertions)]
+  // {
+  //   let s = String::from_utf8(content.to_vec())?;
+  //   info!("Fetched {}, {}", &seed.name, s);
+  // }
+
+  let channel = Channel::read_from(&content[..])?;
+  #[cfg(debug_assertions)]
+  debug!("First item {:?}", &channel.items[0]);
+
+  insert_items(app_handle, seed.id, &channel.items)?;
   info!("Fetched {}", &seed.name);
+
   Ok(())
 }
 

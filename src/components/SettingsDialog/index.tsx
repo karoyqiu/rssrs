@@ -9,6 +9,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+import GenericSettingsCard from './GenericSettingsCard';
 import ProxySettingsCard from './ProxySettingsCard';
 
 type SettingsDialogProps = {
@@ -28,8 +30,12 @@ export default function SettingsDialog(props: SettingsDialogProps) {
         </DialogHeader>
         <Tabs className="flex w-full grow flex-col" defaultValue="proxy">
           <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="generic">Generic</TabsTrigger>
             <TabsTrigger value="proxy">Proxy</TabsTrigger>
           </TabsList>
+          <TabsContent className="grow" value="generic">
+            <GenericSettingsCard />
+          </TabsContent>
           <TabsContent className="grow" value="proxy">
             <ProxySettingsCard />
           </TabsContent>
