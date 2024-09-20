@@ -7,7 +7,7 @@ use specta::Type;
 use tauri::{AppHandle, Manager};
 
 use crate::{
-  adapter::{Adapter, RssAdapter},
+  adapter::{Adapter, RssAdapter, T66yAdapter},
   app_handle::get_app_handle,
   db::{get_all_seeds, initialize, DbAccess},
   events::SeedUnreadCountEvent,
@@ -137,35 +137,51 @@ fn save_last_fetch(app_handle: &AppHandle, seed_id: i64, ok: bool) -> Result<()>
   Ok(())
 }
 
+async fn try_fetch<A>(
+  app_handle: &AppHandle,
+  proxy: &ProxySettings,
+  generic: &GenericSettings,
+  seed: &Seed,
+  adapter: &A,
+) -> Result<bool>
+where
+  A: Adapter,
+{
+  // 抓取
+  let mut fetched = false;
+
+  if adapter.is_supported(&seed.url)? {
+    info!("Fetching {} ({})", &seed.name, seed.id);
+    fetched = true;
+
+    match adapter.fetch(&proxy, &generic, &seed).await {
+      Ok(articles) => {
+        insert_articles(&app_handle, seed.id, &articles)?;
+        save_last_fetch(&app_handle, seed.id, true)?;
+      }
+
+      Err(err) => {
+        warn!("Failed to fetch {}: {:?}", &seed.name, err);
+        save_last_fetch(&app_handle, seed.id, false)?;
+      }
+    }
+  }
+
+  Ok(fetched)
+}
+
 pub async fn check_seeds() -> Result<()> {
   if let Some(app_handle) = get_app_handle() {
     // 读取代理设置和种子
     let (proxy, generic, seeds) = get_data(&app_handle)?;
-    let adapters = vec![RssAdapter::default()];
+    let t66y = T66yAdapter::default();
+    let rss = RssAdapter::default();
 
     for seed in seeds {
       if seed.should_fetch() {
         // 抓取
-        let mut fetched = false;
-
-        for adapter in &adapters {
-          if adapter.is_supported(&seed.url) {
-            info!("Fetching {} ({})", &seed.name, seed.id);
-            fetched = true;
-
-            match adapter.fetch(&proxy, &generic, &seed).await {
-              Ok(articles) => {
-                insert_articles(&app_handle, seed.id, &articles)?;
-                save_last_fetch(&app_handle, seed.id, true)?;
-              }
-
-              Err(err) => {
-                warn!("Failed to fetch {}: {:?}", &seed.name, err);
-                save_last_fetch(&app_handle, seed.id, false)?;
-              }
-            }
-          }
-        }
+        let fetched = try_fetch(&app_handle, &proxy, &generic, &seed, &t66y).await?
+          || try_fetch(&app_handle, &proxy, &generic, &seed, &rss).await?;
 
         if !fetched {
           warn!("No adapter for seed {}", &seed.name);

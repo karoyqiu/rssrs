@@ -1,4 +1,7 @@
+use anyhow::Result;
+use bytes::Bytes;
 use chrono::{DateTime, Days, Local};
+use log::debug;
 use rss::Channel;
 
 use crate::seed::Article;
@@ -10,19 +13,16 @@ use super::Adapter;
 pub struct RssAdapter {}
 
 impl Adapter for RssAdapter {
-  fn is_supported<U>(&self, _: U) -> bool
+  fn is_supported<U>(&self, _: U) -> Result<bool>
   where
     U: reqwest::IntoUrl,
   {
     // 支持所有 URL
-    true
+    Ok(true)
   }
 
-  fn adapt(
-    &self,
-    content: bytes::Bytes,
-    seed_id: i64,
-  ) -> anyhow::Result<Vec<crate::seed::Article>> {
+  fn adapt(&self, content: Bytes, seed_id: i64) -> Result<Vec<Article>> {
+    debug!("Fetching using rss adapter");
     let now = Local::now();
     let deadline = now.checked_sub_days(Days::new(30)).unwrap();
 

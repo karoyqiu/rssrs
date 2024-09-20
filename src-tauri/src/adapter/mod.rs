@@ -1,4 +1,5 @@
 mod rss;
+mod t66y;
 
 use anyhow::Result;
 use bytes::Bytes;
@@ -10,11 +11,12 @@ use crate::{
 };
 
 pub use rss::RssAdapter;
+pub use t66y::T66yAdapter;
 
 /// 适配器接口
 pub trait Adapter {
   /// 是否支持适配指定 URL
-  fn is_supported<U>(&self, url: U) -> bool
+  fn is_supported<U>(&self, url: U) -> Result<bool>
   where
     U: IntoUrl;
 
