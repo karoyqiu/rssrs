@@ -270,6 +270,7 @@ fn to_article(row: &Row) -> Result<Article> {
     id: row.get("id")?,
     seed_id: row.get("seed_id")?,
     seed_name: row.get("name")?,
+    guid: row.get("guid")?,
     title: row.get("title")?,
     author: row.get("author")?,
     desc: row.get("desc")?,

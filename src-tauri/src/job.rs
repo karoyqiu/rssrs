@@ -1,27 +1,26 @@
 use anyhow::Result;
-use chrono::{DateTime, Days, Local};
+use chrono::Local;
 use log::{debug, info, warn};
-use reqwest::Proxy;
-use rss::{Channel, Item};
 use rusqlite::{params, Connection};
 use serde::Deserialize;
 use specta::Type;
 use tauri::{AppHandle, Manager};
 
 use crate::{
+  adapter::{Adapter, RssAdapter},
   app_handle::get_app_handle,
   db::{get_all_seeds, initialize, DbAccess},
   events::SeedUnreadCountEvent,
-  seed::Seed,
+  seed::{Article, Seed},
 };
 
 /// 代理设置
 #[derive(Debug, Deserialize)]
-struct ProxySettings {
+pub struct ProxySettings {
   #[serde(rename = "type")]
-  t: String,
-  host: String,
-  port: u16,
+  pub t: String,
+  pub host: String,
+  pub port: u16,
 }
 
 /// 一般设置
@@ -76,41 +75,28 @@ fn get_data(app_handle: &AppHandle) -> Result<(ProxySettings, GenericSettings, V
   Ok((proxy, generic, seeds))
 }
 
-fn insert_items(app_handle: &AppHandle, seed_id: i64, items: &Vec<Item>) -> Result<()> {
+fn insert_articles(app_handle: &AppHandle, seed_id: i64, articles: &Vec<Article>) -> Result<()> {
+  debug!("Articles: {:#?}", articles);
   app_handle.db_mut(|db| -> Result<()> {
     let tx = db.transaction()?;
     let mut total = 0;
 
     {
       let mut stmt = tx.prepare("INSERT OR IGNORE INTO articles (seed_id, guid, title, author, desc, link, pub_date, unread) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)")?;
-      let now = Local::now();
-      let deadline = now.checked_sub_days(Days::new(30)).unwrap();
 
-      for item in items {
-        let guid = if let Some(guid) = &item.guid {
-          Some(guid.value.clone())
-        } else {
-          None
-        };
+      for article in articles {
+        let inserted = stmt.execute(params![
+          seed_id,
+          article.guid,
+          article.title,
+          article.author,
+          article.desc,
+          article.link,
+          article.pub_date,
+          article.unread,
+        ])?;
 
-        if let Some(date) = &item.pub_date {
-          let date = DateTime::parse_from_rfc2822(date.as_str())?;
-
-          if date > deadline {
-            let date = date.timestamp();
-            let inserted = stmt.execute(params![
-              seed_id,
-              guid,
-              item.title,
-              item.author,
-              item.description,
-              item.link,
-              date,
-              true,
-            ])?;
-            total += inserted;
-          }
-        };
+        total += inserted;
       }
     }
 
@@ -142,47 +128,8 @@ fn insert_items(app_handle: &AppHandle, seed_id: i64, items: &Vec<Item>) -> Resu
   })
 }
 
-async fn fetch(
-  app_handle: &AppHandle,
-  proxy: &ProxySettings,
-  generic: &GenericSettings,
-  seed: &Seed,
-) -> Result<()> {
-  info!("Fetching {}", &seed.name);
-  let mut client = reqwest::Client::builder();
-
-  match proxy.t.as_str() {
-    "none" => {
-      client = client.no_proxy();
-    }
-    "http" => {
-      client = client.proxy(Proxy::all(format!("http://{}:{}", proxy.host, proxy.port))?);
-    }
-    _ => {}
-  }
-
-  let client = client
-    .timeout(std::time::Duration::from_secs(generic.timeout.into()))
-    .build()?;
-  let content = client.get(&seed.url).send().await?.bytes().await?;
-
-  // #[cfg(debug_assertions)]
-  // {
-  //   let s = String::from_utf8(content.to_vec())?;
-  //   info!("Fetched {}, {}", &seed.name, s);
-  // }
-
-  let channel = Channel::read_from(&content[..])?;
-  #[cfg(debug_assertions)]
-  debug!("First item {:?}", &channel.items[0]);
-
-  insert_items(app_handle, seed.id, &channel.items)?;
-  info!("Fetched {}", &seed.name);
-
-  Ok(())
-}
-
 fn save_last_fetch(app_handle: &AppHandle, seed_id: i64, ok: bool) -> Result<()> {
+  info!("Fetched {}: {}", seed_id, ok);
   let db = initialize(app_handle, false)?;
   let mut stmt =
     db.prepare("UPDATE seeds SET last_fetched_at = ?2, last_fetch_ok = ?3 WHERE id = ?1")?;
@@ -194,15 +141,34 @@ pub async fn check_seeds() -> Result<()> {
   if let Some(app_handle) = get_app_handle() {
     // 读取代理设置和种子
     let (proxy, generic, seeds) = get_data(&app_handle)?;
+    let adapters = vec![RssAdapter::default()];
 
     for seed in seeds {
       if seed.should_fetch() {
         // 抓取
-        if let Err(err) = fetch(&app_handle, &proxy, &generic, &seed).await {
-          warn!("Failed to fetch {}: {:?}", &seed.name, err);
-          save_last_fetch(&app_handle, seed.id, false)?;
-        } else {
-          save_last_fetch(&app_handle, seed.id, true)?;
+        let mut fetched = false;
+
+        for adapter in &adapters {
+          if adapter.is_supported(&seed.url) {
+            info!("Fetching {} ({})", &seed.name, seed.id);
+            fetched = true;
+
+            match adapter.fetch(&proxy, &generic, &seed).await {
+              Ok(articles) => {
+                insert_articles(&app_handle, seed.id, &articles)?;
+                save_last_fetch(&app_handle, seed.id, true)?;
+              }
+
+              Err(err) => {
+                warn!("Failed to fetch {}: {:?}", &seed.name, err);
+                save_last_fetch(&app_handle, seed.id, false)?;
+              }
+            }
+          }
+        }
+
+        if !fetched {
+          warn!("No adapter for seed {}", &seed.name);
         }
       }
     }

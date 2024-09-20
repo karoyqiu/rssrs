@@ -53,6 +53,8 @@ pub struct Article {
   pub seed_id: i64,
   /// 种子名称
   pub seed_name: String,
+  /// GUID
+  pub guid: String,
   /// 标题
   pub title: Option<String>,
   /// 作者
@@ -60,7 +62,7 @@ pub struct Article {
   /// 描述
   pub desc: Option<String>,
   /// 链接
-  pub link: String,
+  pub link: Option<String>,
   /// 发布时间，UNIX Epoch
   pub pub_date: i64,
   /// 是否未读
