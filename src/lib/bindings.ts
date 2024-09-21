@@ -95,11 +95,18 @@ export function dbUpdateSeed(seedId: number, name: string, url: string) {
 }
 
 /**
+ * 立即更新指定种子
+ */
+export function fetchSeed(seedId: number) {
+    return invoke()<null>("fetch_seed", { seedId })
+}
+
+/**
  * 文章
  */
 export type Article = { id: number; seed_id: number; seed_name: string; guid: string; title: string | null; author: string | null; desc: string | null; link: string | null; pub_date: number; unread: boolean }
-export type ArticleResult = { articles: Article[]; nextCursor: string | null }
 export type ArticleFilters = { seedId: number | null; cursor: string | null; limit: number | null; search: string | null }
+export type ArticleResult = { articles: Article[]; nextCursor: string | null }
 /**
  * 种子
  */

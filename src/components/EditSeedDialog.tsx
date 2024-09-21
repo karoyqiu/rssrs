@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { EditIcon, SaveIcon } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { EditIcon, Loader2Icon, RotateCwIcon, SaveIcon } from 'lucide-react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -27,8 +27,9 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { dbUpdateSeed, type Seed } from '@/lib/bindings';
-import { addSeedSchema, type AddSeedType } from './AddSeedDialog';
+import { type Seed, dbUpdateSeed, fetchSeed } from '@/lib/bindings';
+
+import { type AddSeedType, addSeedSchema } from './AddSeedDialog';
 
 type EditSeedDialogProps = {
   seed: Pick<Seed, 'id' | 'name' | 'url'>;
@@ -38,10 +39,15 @@ type EditSeedDialogProps = {
 export default function EditSeedDialog(props: EditSeedDialogProps) {
   const { seed, children } = props;
   const [open, setOpen] = useState(false);
+  const [fetching, setFetching] = useState(false);
   const form = useForm<AddSeedType>({
     resolver: zodResolver(addSeedSchema),
     defaultValues: seed,
   });
+
+  useEffect(() => {
+    setFetching(false);
+  }, [seed.id]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -62,7 +68,7 @@ export default function EditSeedDialog(props: EditSeedDialogProps) {
         </DialogHeader>
         <Form {...form}>
           <form
-            className="flex flex-col gap-2"
+            className="flex flex-col gap-4"
             onSubmit={form.handleSubmit(async (values) => {
               const { name, url } = values;
               const result = await dbUpdateSeed(seed.id, name, url);
@@ -100,7 +106,20 @@ export default function EditSeedDialog(props: EditSeedDialogProps) {
                 </FormItem>
               )}
             />
-            <div className="flex flex-row-reverse">
+            <div className="flex justify-between">
+              <Button
+                variant="secondary"
+                type="button"
+                disabled={fetching}
+                onClick={async () => {
+                  setFetching(true);
+                  await fetchSeed(seed.id);
+                  setFetching(false);
+                }}
+              >
+                {fetching ? <Loader2Icon className="animate-spin" /> : <RotateCwIcon />}
+                Fetch now
+              </Button>
               <Button type="submit">
                 <SaveIcon />
                 Save

@@ -9,7 +9,7 @@ use tauri::{AppHandle, Manager};
 use crate::{
   adapter::{Adapter, RssAdapter, T66yAdapter},
   app_handle::get_app_handle,
-  db::{get_all_seeds, initialize, DbAccess},
+  db::{get_all_seeds, get_seed, initialize, DbAccess},
   events::SeedUnreadCountEvent,
   seed::{Article, Seed},
 };
@@ -188,6 +188,32 @@ pub async fn check_seeds() -> Result<()> {
         }
       }
     }
+  }
+
+  Ok(())
+}
+
+/// 立即更新指定种子
+#[tauri::command]
+#[specta::specta]
+pub async fn fetch_seed(app_handle: AppHandle, seed_id: i64) -> crate::error::Result<()> {
+  let (proxy, generic, seed) =
+    app_handle.db(|db| -> Result<(ProxySettings, GenericSettings, Seed)> {
+      let proxy = get_proxy(db)?;
+      let generic = get_generic_settings(db)?;
+      let seed = get_seed(db, seed_id)?;
+      Ok((proxy, generic, seed))
+    })?;
+
+  let t66y = T66yAdapter::default();
+  let rss = RssAdapter::default();
+
+  // 抓取
+  let fetched = try_fetch(&app_handle, &proxy, &generic, &seed, &t66y).await?
+    || try_fetch(&app_handle, &proxy, &generic, &seed, &rss).await?;
+
+  if !fetched {
+    warn!("No adapter for seed {}", &seed.name);
   }
 
   Ok(())

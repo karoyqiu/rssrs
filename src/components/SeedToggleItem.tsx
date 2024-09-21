@@ -1,8 +1,10 @@
+import { ListIcon, RssIcon } from 'lucide-react';
+import { forwardRef } from 'react';
+
 import { ToggleGroupItem } from '@/components/ui/toggle-group';
 import type { Seed } from '@/lib/bindings';
 import useSeedUnreadCount from '@/lib/useSeedUnreadCount';
-import { ListIcon, RssIcon } from 'lucide-react';
-import { forwardRef } from 'react';
+
 import EditSeedDialog from './EditSeedDialog';
 
 type SeedToggleItemProps = {

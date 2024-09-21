@@ -213,6 +213,19 @@ pub fn get_all_seeds(db: &Connection) -> Result<Vec<Seed>> {
   Ok(items)
 }
 
+/// 获取单个种子
+pub fn get_seed(db: &Connection, seed_id: i64) -> Result<Seed> {
+  let mut stmt = db.prepare("SELECT * FROM seeds WHERE id = ?1")?;
+  let mut rows = stmt.query([seed_id])?;
+  let row = rows.next()?;
+
+  if let Some(row) = row {
+    Ok(to_seed(row)?)
+  } else {
+    Err(rusqlite::Error::InvalidQuery)
+  }
+}
+
 /// 获取所有种子。
 #[tauri::command]
 #[specta::specta]

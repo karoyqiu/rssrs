@@ -3,9 +3,10 @@ import { MailIcon, MailOpenIcon } from 'lucide-react';
 import Highlighter from 'react-highlight-words';
 import { useIntersectionObserver, useReadLocalStorage } from 'usehooks-ts';
 
-import { dbReadArticle, type Article } from '@/lib/bindings';
+import { type Article, dbReadArticle } from '@/lib/bindings';
 import useWatchList from '@/lib/useWatchList';
 import { cn } from '@/lib/utils';
+
 import ItemCover from './ArticleCover';
 
 type ItemTileProps = {
@@ -27,8 +28,10 @@ export default function ItemTile(props: ItemTileProps) {
   });
 
   const openLink = async () => {
-    await open(article.link);
-    await dbReadArticle(article.id, true);
+    if (article.link) {
+      await open(article.link);
+      await dbReadArticle(article.id, true);
+    }
   };
 
   const time = new Date(article.pub_date * 1000);
