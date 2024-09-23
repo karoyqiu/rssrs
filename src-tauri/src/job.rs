@@ -2,7 +2,10 @@ use anyhow::Result;
 use base64::{engine::general_purpose::STANDARD, Engine as _};
 use chrono::{DateTime, Days, Local};
 use log::{debug, info, warn};
-use reqwest::{header::CONTENT_TYPE, Proxy};
+use reqwest::{
+  header::{CONTENT_TYPE, REFERER},
+  Proxy,
+};
 use rss::{Channel, Item};
 use rusqlite::{params, Connection};
 use serde::Deserialize;
@@ -216,7 +219,12 @@ pub async fn check_seeds() -> Result<()> {
 /// 下载指定 URL 的数据
 #[tauri::command]
 #[specta::specta]
-pub async fn download(app_handle: AppHandle, url: String) -> crate::error::Result<String> {
+pub async fn download(
+  app_handle: AppHandle,
+  url: String,
+  referer: Option<String>,
+) -> crate::error::Result<String> {
+  debug!("Downloading {}", &url);
   let proxy = app_handle.db(|db| -> Result<ProxySettings> { get_proxy(db) })?;
   let mut client = reqwest::Client::builder();
 
@@ -235,7 +243,13 @@ pub async fn download(app_handle: AppHandle, url: String) -> crate::error::Resul
     .timeout(std::time::Duration::from_secs(30))
     .build()
     .into_result()?;
-  let response = client.get(url).send().await.into_result()?;
+  let mut request = client.get(url);
+
+  if let Some(referer) = referer {
+    request = request.header(REFERER, referer);
+  }
+
+  let response = request.send().await.into_result()?;
   let content_type = {
     let value = response.headers().get(CONTENT_TYPE);
 

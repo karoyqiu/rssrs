@@ -97,8 +97,8 @@ export function dbUpdateSeed(seedId: number, name: string, url: string) {
 /**
  * 下载指定 URL 的数据
  */
-export function download(url: string) {
-    return invoke()<string>("download", { url })
+export function download(url: string, referer: string | null) {
+    return invoke()<string>("download", { url,referer })
 }
 
 /**
