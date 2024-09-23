@@ -3,6 +3,7 @@
 
 mod app_handle;
 mod db;
+mod error;
 mod events;
 mod job;
 mod seed;
@@ -13,7 +14,7 @@ use db::{
   db_get_unread_count, db_get_watch_list, db_insert_seed, db_read_all, db_read_article,
   db_set_setting, db_update_seed, initialize, optimize, AppState,
 };
-use job::check_seeds;
+use job::{check_seeds, download};
 use tauri::{
   async_runtime::spawn, AppHandle, CustomMenuItem, Manager, State, SystemTray, SystemTrayEvent,
   SystemTrayMenu, SystemTrayMenuItem, WindowBuilder,
@@ -47,6 +48,7 @@ fn export_bindings() {
       db_read_all,
       db_set_setting,
       db_update_seed,
+      download,
     ]
     .unwrap(),
     config,
@@ -121,6 +123,7 @@ fn main() {
       db_read_all,
       db_set_setting,
       db_update_seed,
+      download,
     ])
     .setup(|app| {
       let handle = app.handle();

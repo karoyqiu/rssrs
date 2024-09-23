@@ -3,18 +3,18 @@ import { MailIcon, MailOpenIcon } from 'lucide-react';
 import Highlighter from 'react-highlight-words';
 import { useIntersectionObserver, useReadLocalStorage } from 'usehooks-ts';
 
-import { dbReadArticle, type Article } from '@/lib/bindings';
-import useWatchList from '@/lib/useWatchList';
+import { type Article, dbReadArticle } from '@/lib/bindings';
 import { cn } from '@/lib/utils';
+
 import ItemCover from './ArticleCover';
 
 type ItemTileProps = {
   article: Article;
+  keywords: string[];
 };
 
 export default function ItemTile(props: ItemTileProps) {
-  const { article } = props;
-  const { keywords } = useWatchList();
+  const { article, keywords } = props;
   const autoRead = useReadLocalStorage<boolean>('autoRead') ?? true;
   const { ref } = useIntersectionObserver({
     threshold: 0,
@@ -43,7 +43,7 @@ export default function ItemTile(props: ItemTileProps) {
         className="flex grow cursor-pointer flex-col items-center overflow-hidden"
         onClick={openLink}
       >
-        <ItemCover desc={article.desc} />
+        <ItemCover desc={article.desc} link={article.link} />
       </div>
       <div className="flex w-full flex-col gap-px p-2 text-start">
         <Highlighter

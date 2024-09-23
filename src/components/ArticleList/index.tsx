@@ -7,6 +7,8 @@ import type { Seed } from '@/lib/bindings';
 import type { SeedUnreadCountEvent } from '@/lib/events';
 import useArticles from '@/lib/useArticles';
 import useEvent from '@/lib/useEvent';
+import useWatchList from '@/lib/useWatchList';
+
 import ItemTile from './ArticleTile';
 
 type ItemListProps = {
@@ -17,6 +19,7 @@ type ItemListProps = {
 export default function ItemList(props: ItemListProps) {
   const { seedId, search } = props;
   const { articles, more, loadMore, reload } = useArticles(seedId, search);
+  const { keywords } = useWatchList();
   const { ref } = useIntersectionObserver({
     threshold: 0,
     onChange: (isIntersecting) => {
@@ -61,7 +64,7 @@ export default function ItemList(props: ItemListProps) {
       <div ref={topRef} />
       <main className="grid gap-4 p-4 @[50rem]:grid-cols-2 @[75rem]:grid-cols-3 @[100rem]:grid-cols-4 @[125rem]:grid-cols-5">
         {articles.map((article) => (
-          <ItemTile key={article.id} article={article} />
+          <ItemTile key={article.id} article={article} keywords={keywords} />
         ))}
       </main>
       <div className="h-screen w-full" ref={ref} />

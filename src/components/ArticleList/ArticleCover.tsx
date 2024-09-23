@@ -1,5 +1,11 @@
+import { useRef } from 'react';
+import { useEventListener } from 'usehooks-ts';
+
+import { download } from '../../lib/bindings';
+
 type ItemCoverProps = {
   desc: string | null;
+  link: string | null;
 };
 
 const blackList = ['https://m.av28.tv'];
@@ -32,7 +38,19 @@ const findDataLink = (desc: string, imgStart: number, imgEnd: number) => {
 };
 
 export default function ItemCover(props: ItemCoverProps) {
-  const { desc } = props;
+  const { desc, link } = props;
+  let imgRef = useRef<HTMLImageElement>(null);
+
+  useEventListener(
+    'error',
+    async () => {
+      if (imgRef.current) {
+        imgRef.current.src = await download(imgRef.current.src, link);
+      }
+    },
+    imgRef,
+    { once: true, passive: true },
+  );
 
   if (!desc) {
     return null;
@@ -52,7 +70,15 @@ export default function ItemCover(props: ItemCoverProps) {
         const dataLink = findDataLink(desc, imgStart, imgEnd);
 
         if (!dataLink) {
-          return <img src={src} decoding="async" loading="lazy" />;
+          return (
+            <img
+              ref={imgRef}
+              src={src}
+              decoding="async"
+              loading="lazy"
+              referrerPolicy="no-referrer"
+            />
+          );
         }
       }
 
