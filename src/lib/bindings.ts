@@ -95,6 +95,13 @@ export function dbUpdateSeed(seedId: number, name: string, url: string) {
 }
 
 /**
+ * 下载指定 URL 的数据
+ */
+export function download(url: string) {
+    return invoke()<string>("download", { url })
+}
+
+/**
  * 文章
  */
 export type Article = { id: number; seed_id: number; seed_name: string; title: string | null; author: string | null; desc: string | null; link: string; pub_date: number; unread: boolean }

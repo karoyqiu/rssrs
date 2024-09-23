@@ -1,3 +1,8 @@
+import { useRef } from 'react';
+import { useEventListener } from 'usehooks-ts';
+
+import { download } from '@/lib/bindings';
+
 type ItemCoverProps = {
   desc: string | null;
 };
@@ -33,6 +38,19 @@ const findDataLink = (desc: string, imgStart: number, imgEnd: number) => {
 
 export default function ItemCover(props: ItemCoverProps) {
   const { desc } = props;
+  let imgRef = useRef<HTMLImageElement>(null);
+
+  useEventListener(
+    'error',
+    async () => {
+      if (imgRef.current) {
+        let src = await download(imgRef.current.src);
+        imgRef.current.src = src;
+      }
+    },
+    imgRef,
+    { once: true, passive: true },
+  );
 
   if (!desc) {
     return null;
@@ -52,7 +70,7 @@ export default function ItemCover(props: ItemCoverProps) {
         const dataLink = findDataLink(desc, imgStart, imgEnd);
 
         if (!dataLink) {
-          return <img src={src} decoding="async" loading="lazy" />;
+          return <img ref={imgRef} src={src} decoding="async" loading="lazy" />;
         }
       }
 

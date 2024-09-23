@@ -1,7 +1,8 @@
 use anyhow::Result;
+use base64::{engine::general_purpose::STANDARD, Engine as _};
 use chrono::{DateTime, Days, Local};
 use log::{debug, info, warn};
-use reqwest::Proxy;
+use reqwest::{header::CONTENT_TYPE, Proxy};
 use rss::{Channel, Item};
 use rusqlite::{params, Connection};
 use serde::Deserialize;
@@ -11,6 +12,7 @@ use tauri::{AppHandle, Manager};
 use crate::{
   app_handle::get_app_handle,
   db::{get_all_seeds, initialize, DbAccess},
+  error::IntoResult,
   events::SeedUnreadCountEvent,
   seed::Seed,
 };
@@ -209,4 +211,41 @@ pub async fn check_seeds() -> Result<()> {
   }
 
   Ok(())
+}
+
+/// 下载指定 URL 的数据
+#[tauri::command]
+#[specta::specta]
+pub async fn download(app_handle: AppHandle, url: String) -> crate::error::Result<String> {
+  let proxy = app_handle.db(|db| -> Result<ProxySettings> { get_proxy(db) })?;
+  let mut client = reqwest::Client::builder();
+
+  match proxy.t.as_str() {
+    "none" => {
+      client = client.no_proxy();
+    }
+    "http" => {
+      client =
+        client.proxy(Proxy::all(format!("http://{}:{}", proxy.host, proxy.port)).into_result()?);
+    }
+    _ => {}
+  }
+
+  let client = client
+    .timeout(std::time::Duration::from_secs(30))
+    .build()
+    .into_result()?;
+  let response = client.get(url).send().await.into_result()?;
+  let content_type = {
+    let value = response.headers().get(CONTENT_TYPE);
+
+    if let Some(value) = value {
+      String::from(value.to_str().into_result()?)
+    } else {
+      String::from("image/jpeg")
+    }
+  };
+  let body = response.bytes().await.into_result()?;
+  let encoded = STANDARD.encode(&body);
+  Ok(format!("data:{};base64,{}", content_type, encoded))
 }
