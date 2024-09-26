@@ -3,63 +3,65 @@ import { MailIcon, MailOpenIcon } from 'lucide-react';
 import Highlighter from 'react-highlight-words';
 import { useIntersectionObserver, useReadLocalStorage } from 'usehooks-ts';
 
-import { dbMarkItemRead, type SeedItem } from '@/lib/bindings';
-import useWatchList from '@/lib/useWatchList';
+import { type Article, dbReadArticle } from '@/lib/bindings';
 import { cn } from '@/lib/utils';
-import ItemCover from './ItemCover';
+
+import ItemCover from './ArticleCover';
 
 type ItemTileProps = {
-  item: SeedItem;
+  article: Article;
+  keywords: string[];
 };
 
 export default function ItemTile(props: ItemTileProps) {
-  const { item } = props;
-  const { keywords } = useWatchList();
+  const { article, keywords } = props;
   const autoRead = useReadLocalStorage<boolean>('autoRead') ?? true;
   const { ref } = useIntersectionObserver({
     threshold: 0,
     initialIsIntersecting: true,
     onChange: (isIntersecting, entry) => {
-      if (autoRead && item.unread && !isIntersecting && entry.boundingClientRect.top < 0) {
-        dbMarkItemRead(item.id, false);
+      if (autoRead && article.unread && !isIntersecting && entry.boundingClientRect.top < 0) {
+        dbReadArticle(article.id, true);
       }
     },
   });
 
   const openLink = async () => {
-    await open(item.link);
-    await dbMarkItemRead(item.id, false);
+    await open(article.link);
+    await dbReadArticle(article.id, true);
   };
 
+  const time = new Date(article.pub_date * 1000);
+
   return (
-    <div
+    <article
       ref={ref}
       className="flex h-[24rem] w-full flex-col overflow-hidden rounded border"
-      data-test={item.id}
+      data-test={article.id}
     >
       <div
         className="flex grow cursor-pointer flex-col items-center overflow-hidden"
         onClick={openLink}
       >
-        <ItemCover desc={item.desc} />
+        <ItemCover desc={article.desc} link={article.link} />
       </div>
       <div className="flex w-full flex-col gap-px p-2 text-start">
         <Highlighter
           searchWords={keywords}
           autoEscape
-          textToHighlight={item.title}
+          textToHighlight={article.title ?? ''}
           className={cn(
             'w-full cursor-pointer',
-            item.unread ? 'font-bold' : 'text-muted-foreground',
+            article.unread ? 'font-bold' : 'text-muted-foreground',
           )}
           onClick={openLink}
         />
-        <span className="w-full text-sm text-muted-foreground">{item.seed_name}</span>
+        <address className="w-full text-sm text-muted-foreground">{article.seed_name}</address>
         <div className="flex w-full items-center justify-between text-sm text-muted-foreground">
-          <span>{new Date(item.pub_date * 1000).toLocaleString()}</span>
-          {item.unread ? <MailIcon /> : <MailOpenIcon />}
+          <time dateTime={time.toISOString()}>{time.toLocaleString()}</time>
+          {article.unread ? <MailIcon /> : <MailOpenIcon />}
         </div>
       </div>
-    </div>
+    </article>
   );
 }

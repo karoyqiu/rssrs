@@ -44,9 +44,9 @@ impl Seed {
   }
 }
 
-/// 种子项
+/// 文章
 #[derive(Debug, Deserialize, Serialize, Type)]
-pub struct SeedItem {
+pub struct Article {
   /// ID
   pub id: i64,
   /// 种子 ID
@@ -54,9 +54,9 @@ pub struct SeedItem {
   /// 种子名称
   pub seed_name: String,
   /// 标题
-  pub title: String,
+  pub title: Option<String>,
   /// 作者
-  pub author: String,
+  pub author: Option<String>,
   /// 描述
   pub desc: Option<String>,
   /// 链接

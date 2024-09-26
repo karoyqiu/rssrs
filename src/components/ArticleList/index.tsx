@@ -5,17 +5,21 @@ import { useIntersectionObserver } from 'usehooks-ts';
 
 import type { Seed } from '@/lib/bindings';
 import type { SeedUnreadCountEvent } from '@/lib/events';
+import useArticles from '@/lib/useArticles';
 import useEvent from '@/lib/useEvent';
-import useItems from '@/lib/useItems';
-import ItemTile from './ItemTile';
+import useWatchList from '@/lib/useWatchList';
+
+import ItemTile from './ArticleTile';
 
 type ItemListProps = {
   seedId: Seed['id'] | null;
+  search: string | null;
 };
 
 export default function ItemList(props: ItemListProps) {
-  const { seedId } = props;
-  const { items, more, loadMore, reload } = useItems(seedId);
+  const { seedId, search } = props;
+  const { articles, more, loadMore, reload } = useArticles(seedId, search);
+  const { keywords } = useWatchList();
   const { ref } = useIntersectionObserver({
     threshold: 0,
     onChange: (isIntersecting) => {
@@ -49,14 +53,18 @@ export default function ItemList(props: ItemListProps) {
 
   useEffect(() => {
     topRef.current?.scrollIntoView();
-  }, [seedId]);
+  }, [seedId, search]);
+
+  useEffect(() => {
+    console.log(`Articles count: ${articles.length}`);
+  }, [articles.length]);
 
   return (
     <>
       <div ref={topRef} />
       <main className="grid gap-4 p-4 @[50rem]:grid-cols-2 @[75rem]:grid-cols-3 @[100rem]:grid-cols-4 @[125rem]:grid-cols-5">
-        {items.map((item) => (
-          <ItemTile key={item.id} item={item} />
+        {articles.map((article) => (
+          <ItemTile key={article.id} article={article} keywords={keywords} />
         ))}
       </main>
       <div className="h-screen w-full" ref={ref} />

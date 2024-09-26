@@ -1,11 +1,16 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { PlusIcon } from 'lucide-react';
+import { EditIcon, SaveIcon } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
 import {
   Dialog,
   DialogContent,
@@ -22,47 +27,50 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { dbInsertSeed } from '@/lib/bindings';
+import { dbUpdateSeed, type Seed } from '@/lib/bindings';
+import { addSeedSchema, type AddSeedType } from './AddSeedDialog';
 
-export const addSeedSchema = z.object({
-  name: z.string().min(1),
-  url: z.string().url(),
-});
-export type AddSeedType = z.infer<typeof addSeedSchema>;
-
-type AddSeedDialogProps = {
+type EditSeedDialogProps = {
+  seed: Pick<Seed, 'id' | 'name' | 'url'>;
   children: ReactNode;
 };
 
-export default function AddSeedDialog(props: AddSeedDialogProps) {
-  const { children } = props;
+export default function EditSeedDialog(props: EditSeedDialogProps) {
+  const { seed, children } = props;
   const [open, setOpen] = useState(false);
   const form = useForm<AddSeedType>({
     resolver: zodResolver(addSeedSchema),
-    defaultValues: {
-      name: '',
-      url: '',
-    },
+    defaultValues: seed,
   });
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      <ContextMenu>
+        <ContextMenuTrigger className="w-full">{children}</ContextMenuTrigger>
+        <ContextMenuContent>
+          <DialogTrigger asChild>
+            <ContextMenuItem className="gap-2">
+              <EditIcon />
+              Edit
+            </ContextMenuItem>
+          </DialogTrigger>
+        </ContextMenuContent>
+      </ContextMenu>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add seed</DialogTitle>
+          <DialogTitle>Edit seed</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form
             className="flex flex-col gap-2"
             onSubmit={form.handleSubmit(async (values) => {
               const { name, url } = values;
-              const result = await dbInsertSeed(name, url);
+              const result = await dbUpdateSeed(seed.id, name, url);
 
               if (result) {
                 setOpen(false);
               } else {
-                toast.error('Failed to add seed.');
+                toast.error('Failed to save seed.');
               }
             })}
           >
@@ -94,8 +102,8 @@ export default function AddSeedDialog(props: AddSeedDialogProps) {
             />
             <div className="flex flex-row-reverse">
               <Button type="submit">
-                <PlusIcon />
-                Add
+                <SaveIcon />
+                Save
               </Button>
             </div>
           </form>

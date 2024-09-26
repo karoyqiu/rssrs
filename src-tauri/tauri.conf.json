@@ -6,10 +6,7 @@
     "devPath": "http://localhost:1420",
     "distDir": "../dist"
   },
-  "package": {
-    "productName": "rssrs",
-    "version": "../package.json"
-  },
+  "package": {},
   "tauri": {
     "allowlist": {
       "shell": {

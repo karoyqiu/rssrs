@@ -3,39 +3,35 @@
 
 mod app_handle;
 mod db;
+mod error;
 mod events;
 mod job;
 mod seed;
 
 use app_handle::set_app_handle;
 use db::{
-  db_add_watch_keyword, db_delete_watch_keyword, db_get_all_seeds, db_get_items, db_get_setting,
-  db_get_unread_count, db_get_watch_list, db_insert_seed, db_mark_item_read, db_read_all,
-  db_set_setting, initialize, AppState,
+  db_add_watch_keyword, db_delete_watch_keyword, db_get_all_seeds, db_get_articles, db_get_setting,
+  db_get_unread_count, db_get_watch_list, db_insert_seed, db_read_all, db_read_article,
+  db_set_setting, db_update_seed, initialize, optimize, AppState,
 };
-//use events::{SeedItemReadEvent, SeedUnreadCountEvent};
-use job::check_seeds;
-#[cfg(debug_assertions)]
-use specta::{collect_types, ts::BigIntExportBehavior};
+use job::{check_seeds, download};
 use tauri::{
   async_runtime::spawn, AppHandle, CustomMenuItem, Manager, State, SystemTray, SystemTrayEvent,
   SystemTrayMenu, SystemTrayMenuItem, WindowBuilder,
 };
-#[cfg(debug_assertions)]
-use tauri_specta::ts;
 use tokio_schedule::{every, Job};
 
 #[cfg(debug_assertions)]
 fn export_bindings() {
+  //use job::GenericSettings;
+  use specta::{collect_types, ts::BigIntExportBehavior};
+  use tauri_specta::ts;
+
   let config = specta::ts::ExportConfiguration::new().bigint(BigIntExportBehavior::Number);
 
   // println!(
   //   "{}",
-  //   specta::ts::export::<SeedItemReadEvent>(&config).unwrap()
-  // );
-  // println!(
-  //   "{}",
-  //   specta::ts::export::<SeedUnreadCountEvent>(&config).unwrap()
+  //   specta::ts::export::<GenericSettings>(&config).unwrap()
   // );
 
   ts::export_with_cfg(
@@ -43,14 +39,16 @@ fn export_bindings() {
       db_add_watch_keyword,
       db_delete_watch_keyword,
       db_get_all_seeds,
-      db_get_items,
+      db_get_articles,
       db_get_setting,
       db_get_unread_count,
       db_get_watch_list,
       db_insert_seed,
-      db_mark_item_read,
+      db_read_article,
       db_read_all,
-      db_set_setting
+      db_set_setting,
+      db_update_seed,
+      download,
     ]
     .unwrap(),
     config,
@@ -88,12 +86,24 @@ fn main() {
 
   spawn(task);
 
+  // 每小时优化一次数据库
+  let optimze_task = every(1).hour().perform(|| async {
+    optimize();
+  });
+  spawn(optimze_task);
+
   let exit = CustomMenuItem::new("exit".to_string(), "Exit");
   let show = CustomMenuItem::new("show".to_string(), "Show");
   let tray_menu = SystemTrayMenu::new()
     .add_item(show)
     .add_native_item(SystemTrayMenuItem::Separator)
     .add_item(exit);
+
+  #[cfg(debug_assertions)]
+  let tray = SystemTray::new()
+    .with_tooltip("RSS Dev")
+    .with_menu(tray_menu);
+  #[cfg(not(debug_assertions))]
   let tray = SystemTray::new().with_tooltip("RSS").with_menu(tray_menu);
 
   tauri::Builder::default()
@@ -104,14 +114,16 @@ fn main() {
       db_add_watch_keyword,
       db_delete_watch_keyword,
       db_get_all_seeds,
-      db_get_items,
+      db_get_articles,
       db_get_setting,
       db_get_unread_count,
       db_get_watch_list,
       db_insert_seed,
-      db_mark_item_read,
+      db_read_article,
       db_read_all,
-      db_set_setting
+      db_set_setting,
+      db_update_seed,
+      download,
     ])
     .setup(|app| {
       let handle = app.handle();
@@ -133,7 +145,7 @@ fn main() {
           show_main_window(app).unwrap();
         }
         "exit" => {
-          std::process::exit(0);
+          app.exit(0);
         }
         _ => {}
       },
