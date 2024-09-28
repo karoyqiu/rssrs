@@ -22,6 +22,7 @@ function App() {
   const [seedId, setSeedId] = useState(0);
   const [search, setSearch] = useDebounceValue('', 500);
   const [autoRead, setAutoRead] = useLocalStorage('autoRead', true);
+  const [unreadOnly, setUnreadOnly] = useLocalStorage('unreadOnly', true);
   const { seeds } = useSeeds();
 
   useEffect(() => {
@@ -79,6 +80,9 @@ function App() {
           <Toggle pressed={autoRead} onPressedChange={setAutoRead}>
             Auto read
           </Toggle>
+          <Toggle pressed={unreadOnly} onPressedChange={setUnreadOnly}>
+            Unread only
+          </Toggle>
           <Button disabled={seedId < 0} onClick={() => dbReadAll(seedId)}>
             Read all
           </Button>
@@ -93,7 +97,11 @@ function App() {
           </div>
         </div>
         <ScrollArea className="w-full @container">
-          <ArticleList seedId={seedId === 0 ? null : seedId} search={search} />
+          <ArticleList
+            seedId={seedId === 0 ? null : seedId}
+            search={search}
+            unreadOnly={unreadOnly}
+          />
         </ScrollArea>
       </ResizablePanel>
     </ResizablePanelGroup>

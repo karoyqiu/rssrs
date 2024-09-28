@@ -1,17 +1,24 @@
 import type { Event } from '@tauri-apps/api/event';
 import { unique } from 'radash';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Article, dbGetArticles, type Seed } from './bindings';
+
+import { Article, type Seed, dbGetArticles } from './bindings';
 import type { ArticleReadEvent } from './events';
 import useEvent from './useEvent';
 
-const useItems = (seedId: Seed['id'] | null, search: string | null) => {
+const useItems = (seedId: Seed['id'] | null, search: string | null, unreadOnly = true) => {
   const [articles, setArticles] = useState<Article[]>([]);
   const cursor = useRef<string | null>(null);
   const more = useRef<boolean>(true);
 
   const loadMore = useCallback(async () => {
-    const result = await dbGetArticles({ seedId, limit: null, cursor: cursor.current, search });
+    const result = await dbGetArticles({
+      seedId,
+      limit: null,
+      cursor: cursor.current,
+      search,
+      unreadOnly,
+    });
 
     if (cursor.current === null && more.current) {
       setArticles(result.articles);
@@ -31,7 +38,7 @@ const useItems = (seedId: Seed['id'] | null, search: string | null) => {
 
     cursor.current = result.nextCursor;
     more.current = !!result.nextCursor;
-  }, [seedId, search]);
+  }, [seedId, search, unreadOnly]);
 
   const reload = useCallback(() => {
     cursor.current = null;

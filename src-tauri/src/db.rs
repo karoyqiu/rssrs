@@ -294,6 +294,7 @@ pub struct ArticleFilters {
   pub cursor: Option<String>,
   pub limit: Option<i32>,
   pub search: Option<String>,
+  pub unread_only: Option<bool>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Type)]
@@ -312,6 +313,7 @@ fn get_articles_with(
   let mut pub_date = i64::MAX;
   let mut id = 0i64;
   let limit = filters.limit.unwrap_or(20);
+  let unread_only = filters.unread_only.unwrap_or(true);
 
   if let Some(cursor) = &filters.cursor {
     // cursor 格式：pub_date:id
@@ -321,7 +323,7 @@ fn get_articles_with(
   }
 
   params.insert(0, (limit + 1).into());
-  params.insert(0, Value::Integer(0)); // unread
+  params.insert(0, Value::Integer(if unread_only { 0 } else { -1 })); // unread
   params.insert(0, Value::Integer(id));
   params.insert(0, Value::Integer(pub_date));
 
@@ -336,7 +338,6 @@ fn get_articles_with(
       let search_query = format!(" AND instr(title, ?{}) > 0", params.len() + 1);
       query.push_str(&search_query);
       params.push(Value::Text(search.to_owned()));
-      params[2] = Value::Integer(-1); // read
     }
   }
 

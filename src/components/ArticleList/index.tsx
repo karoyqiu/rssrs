@@ -14,11 +14,12 @@ import ItemTile from './ArticleTile';
 type ItemListProps = {
   seedId: Seed['id'] | null;
   search: string | null;
+  unreadOnly?: boolean;
 };
 
 export default function ItemList(props: ItemListProps) {
-  const { seedId, search } = props;
-  const { articles, more, loadMore, reload } = useArticles(seedId, search);
+  const { seedId, search, unreadOnly } = props;
+  const { articles, more, loadMore, reload } = useArticles(seedId, search, unreadOnly);
   const { keywords } = useWatchList();
   const { ref } = useIntersectionObserver({
     threshold: 0,

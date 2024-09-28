@@ -105,9 +105,9 @@ export function download(url: string, referer: string | null) {
  * 文章
  */
 export type Article = { id: number; seed_id: number; seed_name: string; title: string | null; author: string | null; desc: string | null; link: string; pub_date: number; unread: boolean }
-export type ArticleFilters = { seedId: number | null; cursor: string | null; limit: number | null; search: string | null }
+export type ArticleFilters = { seedId: number | null; cursor: string | null; limit: number | null; search: string | null; unreadOnly: boolean | null }
+export type ArticleResult = { articles: Article[]; nextCursor: string | null }
 /**
  * 种子
  */
 export type Seed = { id: number; name: string; url: string; favicon: string | null; interval: number; last_fetched_at: number; last_fetch_ok: boolean }
-export type ArticleResult = { articles: Article[]; nextCursor: string | null }
