@@ -55,5 +55,16 @@
     "typescript": "^5.2.2",
     "vite": "^5.3.1"
   },
-  "packageManager": "yarn@3.5.1+sha512.8cd0e31bd60779ef4ca92b855fb3462c7ec35ce8b345752b7349a68239776417f46d41d79c8047242d9c93b48a1516f64c7444ebe747d9a02bf26868e6fa1f2b"
+  "packageManager": "yarn@4.5.0",
+  "dependenciesMeta": {
+    "@trivago/prettier-plugin-sort-imports@4.3.0": {
+      "unplugged": true
+    },
+    "prettier-plugin-organize-attributes@1.0.0": {
+      "unplugged": true
+    },
+    "prettier-plugin-tailwindcss@0.6.5": {
+      "unplugged": true
+    }
+  }
 }

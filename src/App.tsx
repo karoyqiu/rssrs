@@ -7,17 +7,16 @@ import AddSeedDialog from '@/components/AddSeedDialog';
 import ArticleList from '@/components/ArticleList';
 import SeedToggleItem from '@/components/SeedToggleItem';
 import SettingsDialog from '@/components/SettingsDialog';
+import WatchListDialog from '@/components/WatchListDialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Toggle } from '@/components/ui/toggle';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import WatchListDialog from '@/components/WatchListDialog';
+import '@/globals.css';
 import { dbReadAll } from '@/lib/bindings';
 import useSeeds from '@/lib/useSeeds';
-
-import '@/globals.css';
-import { Input } from './components/ui/input';
 
 function App() {
   const [seedId, setSeedId] = useState(0);
