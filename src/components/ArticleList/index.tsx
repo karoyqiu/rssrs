@@ -1,5 +1,5 @@
 import type { Event } from '@tauri-apps/api/event';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 import { useIntersectionObserver } from 'usehooks-ts';
 
@@ -21,6 +21,14 @@ export default function ItemList(props: ItemListProps) {
   const { seedId, search, unreadOnly } = props;
   const { articles, more, loadMore, reload } = useArticles(seedId, search, unreadOnly);
   const { keywords } = useWatchList();
+  const itemKeywords = useMemo(() => {
+    if (search) {
+      return [...keywords, search];
+    }
+
+    return keywords;
+  }, [keywords, search]);
+
   const { ref } = useIntersectionObserver({
     threshold: 0,
     onChange: (isIntersecting) => {
@@ -65,7 +73,7 @@ export default function ItemList(props: ItemListProps) {
       <div ref={topRef} />
       <main className="grid gap-4 p-4 @[50rem]:grid-cols-2 @[75rem]:grid-cols-3 @[100rem]:grid-cols-4 @[125rem]:grid-cols-5">
         {articles.map((article) => (
-          <ItemTile key={article.id} article={article} keywords={keywords} />
+          <ItemTile key={article.id} article={article} keywords={itemKeywords} />
         ))}
       </main>
       <div className="h-screen w-full" ref={ref} />
