@@ -6,14 +6,14 @@ import { useIntersectionObserver, useReadLocalStorage } from 'usehooks-ts';
 import { type Article, dbReadArticle } from '@/lib/bindings';
 import { cn } from '@/lib/utils';
 
-import ItemCover from './ArticleCover';
+import ArticleCover from './ArticleCover';
 
-type ItemTileProps = {
+type ArticleTileProps = {
   article: Article;
   keywords: string[];
 };
 
-export default function ItemTile(props: ItemTileProps) {
+export default function ArticleTile(props: ArticleTileProps) {
   const { article, keywords } = props;
   const autoRead = useReadLocalStorage<boolean>('autoRead') ?? true;
   const { ref } = useIntersectionObserver({
@@ -43,7 +43,7 @@ export default function ItemTile(props: ItemTileProps) {
         className="flex grow cursor-pointer flex-col items-center overflow-hidden"
         onClick={openLink}
       >
-        <ItemCover desc={article.desc} link={article.link} />
+        <ArticleCover desc={article.desc} link={article.link} />
       </div>
       <div className="flex w-full flex-col gap-px p-2 text-start">
         <Highlighter

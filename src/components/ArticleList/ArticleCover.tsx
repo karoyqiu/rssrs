@@ -1,43 +1,16 @@
 import { useRef } from 'react';
 import { useEventListener } from 'usehooks-ts';
 
-import { download } from '../../lib/bindings';
+import { download } from '@/lib/bindings';
 
-type ItemCoverProps = {
+const blackList = ['https://m.av28.tv'];
+
+type ArticleCoverProps = {
   desc: string | null;
   link: string | null;
 };
 
-const blackList = ['https://m.av28.tv'];
-
-const findProp = (desc: string, imgStart: number, imgEnd: number, prop: string) => {
-  const search = `${prop}="`;
-  const start = desc.indexOf(search, imgStart);
-
-  if (start < 0 || start >= imgEnd) {
-    return null;
-  }
-
-  const end = desc.indexOf('"', start + search.length);
-  const value = desc.substring(start + search.length, end);
-  return value;
-};
-
-const findDataLink = (desc: string, imgStart: number, imgEnd: number) => {
-  const dataLink = findProp(desc, imgStart, imgEnd, 'data-link');
-
-  if (!dataLink) {
-    return null;
-  }
-
-  if (blackList.includes(dataLink.toLowerCase())) {
-    return 'block';
-  }
-
-  return 'maybe';
-};
-
-export default function ItemCover(props: ItemCoverProps) {
+export default function ArticleCover(props: ArticleCoverProps) {
   const { desc, link } = props;
   let imgRef = useRef<HTMLImageElement>(null);
 
@@ -56,24 +29,19 @@ export default function ItemCover(props: ItemCoverProps) {
     return null;
   }
 
-  let imgStart = 0;
+  try {
+    const dom = new DOMParser();
+    const doc = dom.parseFromString(desc, 'text/html');
 
-  while (imgStart >= 0) {
-    imgStart = desc.indexOf('<img ', imgStart);
+    for (const img of doc.querySelectorAll('img')) {
+      if (img.src) {
+        const link = img.dataset.link?.toLowerCase();
 
-    if (imgStart >= 0) {
-      const imgEnd = desc.indexOf('>', imgStart);
-
-      const src = findProp(desc, imgStart, imgEnd, 'src');
-
-      if (src) {
-        const dataLink = findDataLink(desc, imgStart, imgEnd);
-
-        if (!dataLink) {
+        if (!link || !blackList.includes(link)) {
           return (
             <img
               ref={imgRef}
-              src={src}
+              src={img.src}
               decoding="async"
               loading="lazy"
               referrerPolicy="no-referrer"
@@ -81,10 +49,10 @@ export default function ItemCover(props: ItemCoverProps) {
           );
         }
       }
-
-      imgStart = imgEnd;
     }
-  }
+
+    return doc.documentElement.innerText;
+  } catch (e) {}
 
   return desc;
 }
