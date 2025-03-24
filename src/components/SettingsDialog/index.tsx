@@ -28,7 +28,7 @@ export default function SettingsDialog(props: SettingsDialogProps) {
           <DialogTitle>Settings</DialogTitle>
           <DialogDescription>Change the settings of the application.</DialogDescription>
         </DialogHeader>
-        <Tabs className="flex w-full grow flex-col" defaultValue="proxy">
+        <Tabs className="flex w-full grow flex-col" defaultValue="generic">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="generic">Generic</TabsTrigger>
             <TabsTrigger value="proxy">Proxy</TabsTrigger>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+
 import { dbGetSetting, dbSetSetting } from './bindings';
 
 const useSettings = <T>(
@@ -21,7 +22,7 @@ const useSettings = <T>(
   );
 
   useEffect(() => {
-    dbGetSetting(key).then((s) => setValue(JSON.parse(s) as T));
+    dbGetSetting(key).then((s) => setValue({ ...defaultValue, ...JSON.parse(s) }));
   }, [key]);
 
   return [value, save];

@@ -17,22 +17,26 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import useSetting from '@/lib/useSettings';
 
 const genericSchema = z.object({
   timeout: z.coerce.number().int().min(0),
+  ads: z.string(),
 });
 
 export type GenericSettings = z.infer<typeof genericSchema>;
 
 const defaultGenericSettings = Object.freeze<GenericSettings>({
   timeout: 30,
+  ads: '/ads/',
 });
 
 export default function GenericSettingsCard() {
@@ -76,6 +80,19 @@ export default function GenericSettingsCard() {
                     <Input {...field} required type="number" />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="ads"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ads patterns</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} />
+                  </FormControl>
+                  <FormDescription>Input one ads regexp pattern per line.</FormDescription>
                 </FormItem>
               )}
             />
