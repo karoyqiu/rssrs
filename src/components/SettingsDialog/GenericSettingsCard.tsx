@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import useSetting from '@/lib/useSettings';
+import useSettings from '@/lib/useSettings';
 
 const genericSchema = z.object({
   timeout: z.coerce.number().int().min(0),
@@ -34,13 +34,13 @@ const genericSchema = z.object({
 
 export type GenericSettings = z.infer<typeof genericSchema>;
 
-const defaultGenericSettings = Object.freeze<GenericSettings>({
+export const defaultGenericSettings = Object.freeze<GenericSettings>({
   timeout: 30,
   ads: '/ads/',
 });
 
 export default function GenericSettingsCard() {
-  const [generic, save] = useSetting('generic', defaultGenericSettings);
+  const [generic, save] = useSettings('generic', defaultGenericSettings);
   const form = useForm<GenericSettings>({
     resolver: zodResolver(genericSchema),
     defaultValues: generic,

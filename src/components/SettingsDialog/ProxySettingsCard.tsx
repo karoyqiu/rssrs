@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import useSetting from '@/lib/useSettings';
+import useSettings from '@/lib/useSettings';
 
 const proxySchema = z
   .object({
@@ -58,7 +58,7 @@ const defaultProxySettings = Object.freeze<ProxySettings>({
 });
 
 export default function ProxySettingsCard() {
-  const [proxy, save] = useSetting('proxy', defaultProxySettings);
+  const [proxy, save] = useSettings('proxy', defaultProxySettings);
   const form = useForm<ProxySettings>({
     resolver: zodResolver(proxySchema),
     defaultValues: proxy,
