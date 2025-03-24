@@ -1,3 +1,4 @@
+import { ImageOff } from 'lucide-react';
 import { useMemo, useRef } from 'react';
 import { useEventListener } from 'usehooks-ts';
 
@@ -29,7 +30,11 @@ export default function ArticleCover(props: ArticleCoverProps) {
   );
 
   if (!desc) {
-    return null;
+    return (
+      <div className="w-full h-full flex items-center">
+        <ImageOff className="text-muted-foreground m-auto" />
+      </div>
+    );
   }
 
   try {
@@ -54,8 +59,8 @@ export default function ArticleCover(props: ArticleCoverProps) {
       }
     }
 
-    return doc.documentElement.innerText;
+    return <p className="p-2">{doc.documentElement.innerText}</p>;
   } catch (e) {}
 
-  return desc;
+  return <p className="p-2">{desc}</p>;
 }
