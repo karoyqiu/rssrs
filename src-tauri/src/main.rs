@@ -10,9 +10,9 @@ mod seed;
 
 use app_handle::set_app_handle;
 use db::{
-  db_add_watch_keyword, db_delete_watch_keyword, db_get_all_seeds, db_get_articles, db_get_setting,
-  db_get_unread_count, db_get_watch_list, db_insert_seed, db_read_all, db_read_article,
-  db_set_setting, db_update_seed, initialize, optimize, AppState,
+  db_add_watch_keyword, db_delete_seed, db_delete_watch_keyword, db_get_all_seeds, db_get_articles,
+  db_get_setting, db_get_unread_count, db_get_watch_list, db_insert_seed, db_read_all,
+  db_read_article, db_set_setting, db_update_seed, initialize, optimize, AppState,
 };
 use job::{check_seeds, download};
 use tauri::{
@@ -37,6 +37,7 @@ fn export_bindings() {
   ts::export_with_cfg(
     collect_types![
       db_add_watch_keyword,
+      db_delete_seed,
       db_delete_watch_keyword,
       db_get_all_seeds,
       db_get_articles,
@@ -112,6 +113,7 @@ fn main() {
     })
     .invoke_handler(tauri::generate_handler![
       db_add_watch_keyword,
+      db_delete_seed,
       db_delete_watch_keyword,
       db_get_all_seeds,
       db_get_articles,

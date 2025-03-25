@@ -18,6 +18,13 @@ export function dbAddWatchKeyword(keyword: string) {
 }
 
 /**
+ * 删除种子。
+ */
+export function dbDeleteSeed(seedId: number) {
+    return invoke()<boolean>("db_delete_seed", { seedId })
+}
+
+/**
  * 删除监视关键字。
  */
 export function dbDeleteWatchKeyword(keyword: string) {

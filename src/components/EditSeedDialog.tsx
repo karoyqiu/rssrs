@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { EditIcon, SaveIcon } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { EditIcon, SaveIcon, TrashIcon } from 'lucide-react';
+import { type ReactNode, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -27,8 +27,9 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { dbUpdateSeed, type Seed } from '@/lib/bindings';
-import { addSeedSchema, type AddSeedType } from './AddSeedDialog';
+import { type Seed, dbDeleteSeed, dbUpdateSeed } from '@/lib/bindings';
+
+import { type AddSeedType, addSeedSchema } from './AddSeedDialog';
 
 type EditSeedDialogProps = {
   seed: Pick<Seed, 'id' | 'name' | 'url'>;
@@ -100,8 +101,24 @@ export default function EditSeedDialog(props: EditSeedDialogProps) {
                 </FormItem>
               )}
             />
-            <div className="flex flex-row-reverse">
-              <Button type="submit">
+            <div className="flex mt-2">
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={async () => {
+                  const result = await dbDeleteSeed(seed.id);
+
+                  if (result) {
+                    setOpen(false);
+                  } else {
+                    toast.error('Failed to delete seed.');
+                  }
+                }}
+              >
+                <TrashIcon />
+                Delete
+              </Button>
+              <Button className="ml-auto" type="submit">
                 <SaveIcon />
                 Save
               </Button>

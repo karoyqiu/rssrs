@@ -171,11 +171,11 @@ async fn fetch(
     .build()?;
   let content = client.get(&seed.url).send().await?.bytes().await?;
 
-  // #[cfg(debug_assertions)]
-  // {
-  //   let s = String::from_utf8(content.to_vec())?;
-  //   info!("Fetched {}, {}", &seed.name, s);
-  // }
+  #[cfg(debug_assertions)]
+  {
+    let s = String::from_utf8(content.to_vec())?;
+    log::trace!("Fetched {}, {}", &seed.name, s);
+  }
 
   let channel = Channel::read_from(&content[..])?;
   #[cfg(debug_assertions)]

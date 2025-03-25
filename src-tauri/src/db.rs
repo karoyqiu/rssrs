@@ -187,6 +187,22 @@ pub async fn db_update_seed(
   result.is_ok()
 }
 
+/// 删除种子。
+#[tauri::command]
+#[specta::specta]
+pub async fn db_delete_seed(app_handle: AppHandle, seed_id: i64) -> bool {
+  let result = app_handle.db(|db| -> Result<()> {
+    let mut stmt = db.prepare("DELETE FROM seeds WHERE id = ?1")?;
+    stmt.execute(params![seed_id])?;
+
+    app_handle.emit_all("app://seed/add", ()).unwrap();
+
+    Ok(())
+  });
+
+  result.is_ok()
+}
+
 /// 将行转换为 Seed
 fn to_seed(row: &Row) -> Result<Seed> {
   Ok(Seed {
