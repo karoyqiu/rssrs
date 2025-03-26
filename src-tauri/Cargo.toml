@@ -15,7 +15,7 @@ anyhow = "1.0.86"
 base64 = "0.22.1"
 chrono = "0.4.38"
 env_logger = "0.11.5"
-log = "0.4.22"
+log = { version = "0.4.22", features = ["release_max_level_off"] }
 reqwest = { version = "0.12.5", features = ["gzip", "brotli", "deflate"] }
 rss = { version = "2.0.8", default-features = false }
 rusqlite = { version = "0.32.1", features = ["bundled"] }

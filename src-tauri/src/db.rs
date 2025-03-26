@@ -1,7 +1,7 @@
 use std::vec;
 
 use chrono::{Days, Local};
-use log::{info, trace};
+use log::info;
 use rusqlite::types::Value;
 use rusqlite::{params, params_from_iter, Connection, OpenFlags, Result, Row};
 use serde::{Deserialize, Serialize};
@@ -360,11 +360,8 @@ fn get_articles_with(
   let sql = format!("SELECT articles.*, seeds.name FROM articles LEFT JOIN seeds ON articles.seed_id = seeds.id WHERE (pub_date < ?1 OR (pub_date = ?1 AND articles.id >= ?2)) AND unread != ?3 {} ORDER BY pub_date DESC, articles.id ASC LIMIT ?4", query);
   let mut stmt = db.prepare(&sql)?;
 
-  #[cfg(debug_assertions)]
-  {
-    trace!("SQL: {}", &sql);
-    trace!("PARAMS: {:?}", &params);
-  }
+  log::trace!("SQL: {}", &sql);
+  log::trace!("PARAMS: {:?}", &params);
 
   let mut rows = stmt.query(params_from_iter(params))?;
   let mut articles = Vec::new();
