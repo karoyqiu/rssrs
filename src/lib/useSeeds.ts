@@ -1,19 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
-import { dbGetAllSeeds, Seed } from './bindings';
+
+import { type Seed, commands } from './bindings';
 import useEvent from './useEvent';
 
 const useSeeds = () => {
   const [seeds, setSeeds] = useState<Seed[]>([]);
 
   const refresh = useCallback(() => {
-    dbGetAllSeeds().then(setSeeds);
+    commands.dbGetAllSeeds().then(setSeeds);
   }, []);
 
   useEffect(() => {
     refresh();
   }, []);
 
-  useEvent('app://seed/add', refresh);
+  useEvent('seedAddEvent', refresh);
 
   return { seeds, refresh };
 };

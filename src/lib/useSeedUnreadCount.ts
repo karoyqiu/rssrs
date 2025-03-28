@@ -1,14 +1,14 @@
 import type { Event } from '@tauri-apps/api/event';
 import { useCallback, useEffect, useState } from 'react';
-import { dbGetUnreadCount, type Seed } from './bindings';
-import type { SeedUnreadCountEvent } from './events';
+
+import { type Seed, type SeedNewEvent, type SeedUnreadCountEvent, commands } from './bindings';
 import useEvent from './useEvent';
 
 const useSeedUnreadCount = (seedId: Seed['id'] | null) => {
   const [unread, setUnread] = useState(0);
 
   useEffect(() => {
-    dbGetUnreadCount(seedId).then(setUnread);
+    commands.dbGetUnreadCount(seedId).then(setUnread);
   }, [seedId]);
 
   const unreadHandler = useCallback(
@@ -17,19 +17,19 @@ const useSeedUnreadCount = (seedId: Seed['id'] | null) => {
         setUnread(payload.unreadCount);
       }
     },
-    [seedId, setUnread],
+    [seedId],
   );
   const newHandler = useCallback(
-    ({ payload }: Event<SeedUnreadCountEvent>) => {
+    ({ payload }: Event<SeedNewEvent>) => {
       if (payload.id === seedId) {
         setUnread((old) => old + payload.unreadCount);
       }
     },
-    [seedId, setUnread],
+    [seedId],
   );
 
-  useEvent('app://seed/unread', unreadHandler);
-  useEvent('app://seed/new', newHandler);
+  useEvent('seedUnreadCountEvent', unreadHandler);
+  useEvent('seedNewEvent', newHandler);
 
   return unread;
 };

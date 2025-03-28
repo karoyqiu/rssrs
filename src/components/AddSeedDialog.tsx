@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PlusIcon } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -22,7 +22,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { dbInsertSeed } from '@/lib/bindings';
+import { commands } from '@/lib/bindings';
 
 export const addSeedSchema = z.object({
   name: z.string().min(1),
@@ -57,7 +57,7 @@ export default function AddSeedDialog(props: AddSeedDialogProps) {
             className="flex flex-col gap-2"
             onSubmit={form.handleSubmit(async (values) => {
               const { name, url } = values;
-              const result = await dbInsertSeed(name, url);
+              const result = await commands.dbInsertSeed(name, url);
 
               if (result) {
                 setOpen(false);

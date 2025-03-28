@@ -1,5 +1,5 @@
 import { MinusIcon, PlusIcon } from 'lucide-react';
-import { Fragment, useRef, type ReactNode } from 'react';
+import { Fragment, type ReactNode, useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -11,8 +11,9 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { commands } from '@/lib/bindings';
 import useWatchList from '@/lib/useWatchList';
-import { dbAddWatchKeyword, dbDeleteWatchKeyword } from '../lib/bindings';
+
 import { ScrollArea } from './ui/scroll-area';
 
 type WatchListDialogProps = {
@@ -26,7 +27,7 @@ export default function WatchListDialog(props: WatchListDialogProps) {
 
   const add = async () => {
     if (keywordRef.current?.value) {
-      const ok = await dbAddWatchKeyword(keywordRef.current.value);
+      const ok = await commands.dbAddWatchKeyword(keywordRef.current.value);
 
       if (ok) {
         keywordRef.current.value = '';
@@ -72,7 +73,7 @@ export default function WatchListDialog(props: WatchListDialogProps) {
                     variant="ghost"
                     size="icon"
                     onClick={async () => {
-                      await dbDeleteWatchKeyword(k);
+                      await commands.dbDeleteWatchKeyword(k);
                       keywordRef.current?.focus();
                     }}
                   >

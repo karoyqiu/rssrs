@@ -3,8 +3,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 import { useIntersectionObserver } from 'usehooks-ts';
 
-import type { Seed } from '@/lib/bindings';
-import type { SeedUnreadCountEvent } from '@/lib/events';
+import type { Seed, SeedNewEvent } from '@/lib/bindings';
 import useArticles from '@/lib/useArticles';
 import useEvent from '@/lib/useEvent';
 import useWatchList from '@/lib/useWatchList';
@@ -42,7 +41,7 @@ export default function ArticleList(props: ArticleListProps) {
   const toastId = useRef<string | number>();
 
   const newHandler = useCallback(
-    ({ payload }: Event<SeedUnreadCountEvent>) => {
+    ({ payload }: Event<SeedNewEvent>) => {
       if (payload.id === seedId) {
         toastId.current = toast.info('There are some new articles.', {
           id: toastId.current,
@@ -58,7 +57,7 @@ export default function ArticleList(props: ArticleListProps) {
     [seedId],
   );
 
-  useEvent('app://seed/new', newHandler);
+  useEvent('seedNewEvent', newHandler);
 
   useEffect(() => {
     topRef.current?.scrollIntoView();

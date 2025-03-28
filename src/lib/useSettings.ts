@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { dbGetSetting, dbSetSetting } from './bindings';
+import { commands } from './bindings';
 
 const useSettings = <T>(
   key: string,
@@ -10,7 +10,7 @@ const useSettings = <T>(
 
   const save = useCallback(
     async (v: T) => {
-      const ok = await dbSetSetting(key, JSON.stringify(v));
+      const ok = await commands.dbSetSetting(key, JSON.stringify(v));
 
       if (ok) {
         setValue(v);
@@ -22,7 +22,7 @@ const useSettings = <T>(
   );
 
   useEffect(() => {
-    dbGetSetting(key).then((s) => setValue({ ...defaultValue, ...JSON.parse(s) }));
+    commands.dbGetSetting(key).then((s) => setValue({ ...defaultValue, ...JSON.parse(s) }));
   }, [key]);
 
   return [value, save];

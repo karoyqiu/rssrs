@@ -1,13 +1,16 @@
-import { listen, type EventCallback, type EventName } from '@tauri-apps/api/event';
 import { useEffect } from 'react';
 
-const useEvent = <T>(event: EventName, handler: EventCallback<T>) => {
+import { events } from './bindings';
+
+type EventsType = typeof events;
+
+const useEvent = <T extends keyof EventsType>(
+  event: T,
+  handler: Parameters<EventsType[T]['listen']>[0],
+) => {
   useEffect(() => {
     console.debug(`Listen ${event}`);
-    const unlisten = listen<T>(event, (event) => {
-      console.debug('Event received', event);
-      handler(event);
-    });
+    const unlisten = events[event].listen(handler);
 
     return () => {
       console.debug(`Unlisten ${event}`);

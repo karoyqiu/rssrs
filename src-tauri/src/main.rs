@@ -14,7 +14,9 @@ use db::{
   db_get_setting, db_get_unread_count, db_get_watch_list, db_insert_seed, db_read_all,
   db_read_article, db_set_setting, db_update_seed, initialize, optimize, AppState,
 };
-use events::{ArticleReadEvent, SeedAddEvent, SeedUnreadCountEvent, WatchlistChangeEvent};
+use events::{
+  ArticleReadEvent, SeedAddEvent, SeedNewEvent, SeedUnreadCountEvent, WatchlistChangeEvent,
+};
 use job::{check_seeds, download};
 use tauri::{
   async_runtime::spawn,
@@ -61,6 +63,7 @@ fn main() {
     .events(tauri_specta::collect_events![
       ArticleReadEvent,
       SeedAddEvent,
+      SeedNewEvent,
       SeedUnreadCountEvent,
       WatchlistChangeEvent,
     ])

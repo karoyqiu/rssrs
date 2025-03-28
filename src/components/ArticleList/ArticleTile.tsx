@@ -3,7 +3,7 @@ import { MailIcon, MailOpenIcon } from 'lucide-react';
 import Highlighter from 'react-highlight-words';
 import { useIntersectionObserver, useReadLocalStorage } from 'usehooks-ts';
 
-import { type Article, dbReadArticle } from '@/lib/bindings';
+import { type Article, commands } from '@/lib/bindings';
 import { cn } from '@/lib/utils';
 
 import ArticleCover from './ArticleCover';
@@ -21,15 +21,13 @@ export default function ArticleTile(props: ArticleTileProps) {
     initialIsIntersecting: true,
     onChange: (isIntersecting, entry) => {
       if (autoRead && article.unread && !isIntersecting && entry.boundingClientRect.top < 0) {
-        dbReadArticle(article.id, true);
+        commands.dbReadArticle(article.id, true);
       }
     },
   });
 
-  const openLink = async () => {
-    await open(article.link);
-    await dbReadArticle(article.id, true);
-  };
+  const openLink = () =>
+    Promise.all([open(article.link), commands.dbReadArticle(article.id, true)]);
 
   const time = new Date(article.pub_date * 1000);
 

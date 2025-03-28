@@ -1,19 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
-import { dbGetWatchList } from './bindings';
+
+import { commands } from './bindings';
 import useEvent from './useEvent';
 
 const useWatchList = () => {
   const [keywords, setKeywords] = useState<string[]>([]);
 
   const refresh = useCallback(() => {
-    dbGetWatchList().then(setKeywords);
+    commands.dbGetWatchList().then(setKeywords);
   }, []);
 
   useEffect(() => {
     refresh();
   }, []);
 
-  useEvent('app://watchlist/change', refresh);
+  useEvent('watchlistChangeEvent', refresh);
 
   return { keywords, refresh };
 };

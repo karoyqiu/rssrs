@@ -15,9 +15,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Toggle } from '@/components/ui/toggle';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import '@/globals.css';
-import { dbReadAll } from '@/lib/bindings';
+import { commands } from '@/lib/bindings';
 import useSeeds from '@/lib/useSeeds';
-const appWindow = getCurrentWebviewWindow()
+
+const appWindow = getCurrentWebviewWindow();
 
 function App() {
   const [seedId, setSeedId] = useState(0);
@@ -84,7 +85,7 @@ function App() {
           <Toggle pressed={unreadOnly} onPressedChange={setUnreadOnly}>
             Unread only
           </Toggle>
-          <Button disabled={seedId < 0} onClick={() => dbReadAll(seedId)}>
+          <Button disabled={seedId < 0} onClick={() => commands.dbReadAll(seedId)}>
             Read all
           </Button>
           <div className="relative flex-1">

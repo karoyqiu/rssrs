@@ -27,7 +27,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { type Seed, dbDeleteSeed, dbUpdateSeed } from '@/lib/bindings';
+import { type Seed, commands } from '@/lib/bindings';
 
 import { type AddSeedType, addSeedSchema } from './AddSeedDialog';
 
@@ -66,7 +66,7 @@ export default function EditSeedDialog(props: EditSeedDialogProps) {
             className="flex flex-col gap-2"
             onSubmit={form.handleSubmit(async (values) => {
               const { name, url } = values;
-              const result = await dbUpdateSeed(seed.id, name, url);
+              const result = await commands.dbUpdateSeed(seed.id, name, url);
 
               if (result) {
                 setOpen(false);
@@ -106,7 +106,7 @@ export default function EditSeedDialog(props: EditSeedDialogProps) {
                 type="button"
                 variant="destructive"
                 onClick={async () => {
-                  const result = await dbDeleteSeed(seed.id);
+                  const result = await commands.dbDeleteSeed(seed.id);
 
                   if (result) {
                     setOpen(false);

@@ -2,7 +2,7 @@ import { ImageOff } from 'lucide-react';
 import { useMemo, useRef } from 'react';
 import { useEventListener } from 'usehooks-ts';
 
-import { download } from '@/lib/bindings';
+import { commands } from '@/lib/bindings';
 import useSettings from '@/lib/useSettings';
 
 import { defaultGenericSettings } from '../SettingsDialog/GenericSettingsCard';
@@ -22,7 +22,7 @@ export default function ArticleCover(props: ArticleCoverProps) {
     'error',
     async () => {
       if (imgRef.current) {
-        imgRef.current.src = await download(imgRef.current.src, link);
+        imgRef.current.src = await commands.download(imgRef.current.src, link);
       }
     },
     imgRef,

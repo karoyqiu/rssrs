@@ -98,11 +98,13 @@ async download(url: string, referer: string | null) : Promise<string> {
 export const events = __makeEvents__<{
 articleReadEvent: ArticleReadEvent,
 seedAddEvent: SeedAddEvent,
+seedNewEvent: SeedNewEvent,
 seedUnreadCountEvent: SeedUnreadCountEvent,
 watchlistChangeEvent: WatchlistChangeEvent
 }>({
 articleReadEvent: "article-read-event",
 seedAddEvent: "seed-add-event",
+seedNewEvent: "seed-new-event",
 seedUnreadCountEvent: "seed-unread-count-event",
 watchlistChangeEvent: "watchlist-change-event"
 })
@@ -207,6 +209,18 @@ last_fetch_ok: boolean }
  * 种子添加事件
  */
 export type SeedAddEvent = null
+/**
+ * 新种子事件
+ */
+export type SeedNewEvent = { 
+/**
+ * 种子 ID
+ */
+id: number | null; 
+/**
+ * 未读数量
+ */
+unreadCount: number }
 /**
  * 种子未读数量事件
  */
