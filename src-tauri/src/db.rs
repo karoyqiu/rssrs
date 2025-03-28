@@ -7,13 +7,15 @@ use rusqlite::{params, params_from_iter, Connection, OpenFlags, Result, Row};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::{AppHandle, Manager, State};
+use tauri_specta::Event;
 
 use crate::app_handle::get_app_handle;
-use crate::events::{ArticleReadEvent, SeedUnreadCountEvent};
+use crate::events::{ArticleReadEvent, SeedAddEvent, SeedUnreadCountEvent, WatchlistChangeEvent};
 use crate::seed::{Article, Seed};
 
 const CURRENT_DB_VERSION: u32 = 4;
 
+#[derive(Default)]
 pub struct AppState {
   pub db: std::sync::Mutex<Option<Connection>>,
 }
@@ -54,7 +56,7 @@ impl DbAccess for AppHandle {
 
 pub fn initialize(app_handle: &AppHandle, readonly: bool) -> Result<Connection> {
   let app_dir = app_handle
-    .path_resolver()
+    .path()
     .app_data_dir()
     .expect("The app data directory should exist.");
   std::fs::create_dir_all(&app_dir).expect("The app data directory should be created.");
@@ -158,7 +160,7 @@ pub async fn db_insert_seed(app_handle: AppHandle, name: String, url: String) ->
     let mut stmt = db.prepare("INSERT INTO seeds (name, url, interval, last_fetched_at, last_fetch_ok) VALUES (?1, ?2, 10, 0, 0)")?;
     stmt.execute([name, url])?;
 
-    app_handle.emit_all("app://seed/add", ()).unwrap();
+    SeedAddEvent {}.emit(&app_handle).unwrap();
 
     Ok(())
   });
@@ -179,7 +181,7 @@ pub async fn db_update_seed(
     let mut stmt = db.prepare("UPDATE seeds SET name = ?1, url = ?2 WHERE id = ?3")?;
     stmt.execute(params![name, url, seed_id])?;
 
-    app_handle.emit_all("app://seed/add", ()).unwrap();
+    SeedAddEvent {}.emit(&app_handle).unwrap();
 
     Ok(())
   });
@@ -195,7 +197,7 @@ pub async fn db_delete_seed(app_handle: AppHandle, seed_id: i64) -> bool {
     let mut stmt = db.prepare("DELETE FROM seeds WHERE id = ?1")?;
     stmt.execute(params![seed_id])?;
 
-    app_handle.emit_all("app://seed/add", ()).unwrap();
+    SeedAddEvent {}.emit(&app_handle).unwrap();
 
     Ok(())
   });
@@ -460,37 +462,28 @@ pub async fn db_read_article(app_handle: AppHandle, item_id: i64, read: bool) ->
     // 上报种子未读数量事件
     let article = get_article(db, item_id)?;
     let unread_count = get_unread_count(db, Some(article.seed_id))?;
-    app_handle
-      .emit_all(
-        "app://seed/unread",
-        SeedUnreadCountEvent {
-          id: Some(article.seed_id),
-          unread_count,
-        },
-      )
-      .unwrap();
+    SeedUnreadCountEvent {
+      id: Some(article.seed_id),
+      unread_count,
+    }
+    .emit(&app_handle)
+    .unwrap();
 
     let unread_count = get_unread_count(db, None)?;
-    app_handle
-      .emit_all(
-        "app://seed/unread",
-        SeedUnreadCountEvent {
-          id: None,
-          unread_count,
-        },
-      )
-      .unwrap();
+    SeedUnreadCountEvent {
+      id: None,
+      unread_count,
+    }
+    .emit(&app_handle)
+    .unwrap();
 
     // 上报文章已读事件
-    app_handle
-      .emit_all(
-        "app://article/unread",
-        ArticleReadEvent {
-          id: item_id,
-          unread: !read,
-        },
-      )
-      .unwrap();
+    ArticleReadEvent {
+      id: item_id,
+      unread: !read,
+    }
+    .emit(&app_handle)
+    .unwrap();
 
     Ok(())
   });
@@ -520,39 +513,30 @@ pub async fn db_read_all(app_handle: AppHandle, seed_id: Option<i64>) -> bool {
     stmt.execute(params_from_iter(params))?;
 
     // 上报种子未读数量事件
-    app_handle
-      .emit_all(
-        "app://seed/unread",
-        SeedUnreadCountEvent {
-          id: seed_id,
-          unread_count: 0,
-        },
-      )
-      .unwrap();
+    SeedUnreadCountEvent {
+      id: seed_id,
+      unread_count: 0,
+    }
+    .emit(&app_handle)
+    .unwrap();
 
-    app_handle
-      .emit_all(
-        "app://seed/unread",
-        SeedUnreadCountEvent {
-          id: None,
-          unread_count: if sid > 0 {
-            get_unread_count(db, None)?
-          } else {
-            0
-          },
-        },
-      )
-      .unwrap();
+    SeedUnreadCountEvent {
+      id: None,
+      unread_count: if sid > 0 {
+        get_unread_count(db, None)?
+      } else {
+        0
+      },
+    }
+    .emit(&app_handle)
+    .unwrap();
 
-    app_handle
-      .emit_all(
-        "app://article/unread",
-        ArticleReadEvent {
-          id: -1,
-          unread: false,
-        },
-      )
-      .unwrap();
+    ArticleReadEvent {
+      id: -1,
+      unread: false,
+    }
+    .emit(&app_handle)
+    .unwrap();
 
     Ok(())
   });
@@ -601,7 +585,7 @@ pub async fn db_add_watch_keyword(app_handle: AppHandle, keyword: String) -> boo
 
   result.unwrap();
 
-  app_handle.emit_all("app://watchlist/change", ()).unwrap();
+  WatchlistChangeEvent {}.emit(&app_handle).unwrap();
 
   true
 
@@ -620,7 +604,7 @@ pub async fn db_delete_watch_keyword(app_handle: AppHandle, keyword: String) -> 
 
   result.unwrap();
 
-  app_handle.emit_all("app://watchlist/change", ()).unwrap();
+  WatchlistChangeEvent {}.emit(&app_handle).unwrap();
 
   true
 

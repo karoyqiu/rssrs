@@ -22,7 +22,8 @@
     "@radix-ui/react-toggle": "^1.1.0",
     "@radix-ui/react-toggle-group": "^1.1.0",
     "@tailwindcss/container-queries": "^0.1.1",
-    "@tauri-apps/api": "^1",
+    "@tauri-apps/api": "2.0.0",
+    "@tauri-apps/plugin-shell": "~2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.424.0",
@@ -39,7 +40,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^1",
+    "@tauri-apps/cli": "^2.4.0",
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@types/node": "^22.1.0",
     "@types/react": "^18.2.15",

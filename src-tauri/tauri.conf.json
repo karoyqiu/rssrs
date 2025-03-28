@@ -1,35 +1,37 @@
 {
-  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
+  "$schema": "https://schema.tauri.app/config/2",
   "build": {
     "beforeDevCommand": "yarn dev",
     "beforeBuildCommand": "yarn build",
-    "devPath": "http://localhost:1420",
-    "distDir": "../dist"
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420"
   },
-  "package": {},
-  "tauri": {
-    "allowlist": {
-      "shell": {
-        "open": true
-      },
-      "window": {
-        "maximize": true,
-        "show": true
-      }
-    },
+  "bundle": {
+    "active": false,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  "identifier": "com.gmail.karoyqiu.rssrs",
+  "plugins": {},
+  "app": {
     "windows": [
       {
         "title": "RSS",
         "width": 1200,
         "height": 700,
         "center": true,
-        "visible": false
+        "visible": false,
+        "useHttpsScheme": true
       }
     ],
     "security": {
       "csp": {
-        "default-src": ["'self'"],
-        "img-src": ["'self'", "https:", "data:"],
         "style-src": [
           "'self'",
           "'nonce-rWvh_Hd30vNJfto7tl9ve'",
@@ -37,25 +39,11 @@
           "'sha256-qixoDh78J8vISHKC3rLI7qSXmTShr8mhsUgjJL7W7aU='",
           "'sha256-3gJFr3n77fnX5qwQpGju/zCOsoHW5RMqQd5XOb9WFcA='",
           "'sha256-K/NeD53vB+5+2jizTdfGGkVkvm4CMfXJ5UTuQOzO8sY='"
-        ]
+        ],
+        "connect-src": ["ipc: http://ipc.localhost"],
+        "img-src": ["'self'", "https:", "data:"],
+        "default-src": ["'self'"]
       }
-    },
-    "systemTray": {
-      "iconPath": "icons/32x32.png",
-      "iconAsTemplate": true,
-      "title": "RSS"
-    },
-    "bundle": {
-      "active": false,
-      "targets": "all",
-      "identifier": "com.gmail.karoyqiu.rssrs",
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ]
     }
   }
 }

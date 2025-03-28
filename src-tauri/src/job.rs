@@ -10,13 +10,14 @@ use rss::{Channel, Item};
 use rusqlite::{params, Connection};
 use serde::Deserialize;
 use specta::Type;
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
+use tauri_specta::Event;
 
 use crate::{
   app_handle::get_app_handle,
   db::{get_all_seeds, initialize, DbAccess},
   error::IntoResult,
-  events::SeedUnreadCountEvent,
+  events::SeedNewEvent,
   seed::Seed,
 };
 
@@ -123,24 +124,16 @@ fn insert_items(app_handle: &AppHandle, seed_id: i64, items: &Vec<Item>) -> Resu
 
     if total > 0 {
       info!("{total} new articles");
-      app_handle
-        .emit_all(
-          "app://seed/new",
-          SeedUnreadCountEvent {
-            id: Some(seed_id),
-            unread_count: total as i32,
-          },
-        )
-        .unwrap();
-      app_handle
-        .emit_all(
-          "app://seed/new",
-          SeedUnreadCountEvent {
-            id: None,
-            unread_count: total as i32,
-          },
-        )
-        .unwrap();
+
+      SeedNewEvent {
+        id: Some(seed_id),
+        unread_count: total as i32,
+      }.emit(app_handle)?;
+
+      SeedNewEvent {
+        id: None,
+        unread_count: total as i32,
+      }.emit(app_handle)?;
     }
 
     Ok(())

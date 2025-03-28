@@ -1,4 +1,4 @@
-import { appWindow } from '@tauri-apps/api/window';
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { EyeIcon, PlusIcon, SearchIcon, SettingsIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDebounceValue, useLocalStorage } from 'usehooks-ts';
@@ -17,6 +17,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import '@/globals.css';
 import { dbReadAll } from '@/lib/bindings';
 import useSeeds from '@/lib/useSeeds';
+const appWindow = getCurrentWebviewWindow()
 
 function App() {
   const [seedId, setSeedId] = useState(0);

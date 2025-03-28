@@ -14,28 +14,35 @@ use db::{
   db_get_setting, db_get_unread_count, db_get_watch_list, db_insert_seed, db_read_all,
   db_read_article, db_set_setting, db_update_seed, initialize, optimize, AppState,
 };
+use events::{ArticleReadEvent, SeedAddEvent, SeedUnreadCountEvent, WatchlistChangeEvent};
 use job::{check_seeds, download};
 use tauri::{
-  async_runtime::spawn, AppHandle, CustomMenuItem, Manager, State, SystemTray, SystemTrayEvent,
-  SystemTrayMenu, SystemTrayMenuItem, WindowBuilder,
+  async_runtime::spawn,
+  menu::{MenuBuilder, MenuItemBuilder},
+  tray::TrayIconBuilder,
+  AppHandle, Manager, State,
 };
 use tokio_schedule::{every, Job};
 
-#[cfg(debug_assertions)]
-fn export_bindings() {
-  //use job::GenericSettings;
-  use specta::{collect_types, ts::BigIntExportBehavior};
-  use tauri_specta::ts;
+fn show_main_window(app: &AppHandle) -> tauri::Result<()> {
+  if let Some(window) = app.get_webview_window("main") {
+    window.show()?;
+    window.set_focus()?;
+  } else {
+    tauri::webview::WebviewWindowBuilder::from_config(
+      app,
+      &app.config().app.windows.get(0).unwrap().clone(),
+    )?
+    .build()?;
+  }
 
-  let config = specta::ts::ExportConfiguration::new().bigint(BigIntExportBehavior::Number);
+  Ok(())
+}
 
-  // println!(
-  //   "{}",
-  //   specta::ts::export::<GenericSettings>(&config).unwrap()
-  // );
-
-  ts::export_with_cfg(
-    collect_types![
+fn main() {
+  let builder = tauri_specta::Builder::<tauri::Wry>::new()
+    // Then register them (separated by a comma)
+    .commands(tauri_specta::collect_commands![
       db_add_watch_keyword,
       db_delete_seed,
       db_delete_watch_keyword,
@@ -50,28 +57,25 @@ fn export_bindings() {
       db_set_setting,
       db_update_seed,
       download,
-    ]
-    .unwrap(),
-    config,
-    "../src/lib/bindings.ts",
-  )
-  .unwrap();
-}
+    ])
+    .events(tauri_specta::collect_events![
+      ArticleReadEvent,
+      SeedAddEvent,
+      SeedUnreadCountEvent,
+      WatchlistChangeEvent,
+    ])
+    .error_handling(tauri_specta::ErrorHandlingMode::Throw);
 
-fn show_main_window(app: &AppHandle) -> tauri::Result<()> {
-  if let Some(window) = app.get_window("main") {
-    window.show()?;
-    window.set_focus()?;
-  } else {
-    WindowBuilder::from_config(app, app.config().tauri.windows.get(0).unwrap().clone()).build()?;
-  }
-
-  Ok(())
-}
-
-fn main() {
   #[cfg(debug_assertions)]
-  export_bindings();
+  {
+    let lang = specta_typescript::Typescript::new()
+      .bigint(specta_typescript::BigIntExportBehavior::Number)
+      .header("// @ts-nocheck\n");
+
+    builder
+      .export(&lang, "../src/lib/bindings.ts")
+      .expect("Failed to export typescript bindings");
+  }
 
   env_logger::init();
 
@@ -93,41 +97,46 @@ fn main() {
   });
   spawn(optimze_task);
 
-  let exit = CustomMenuItem::new("exit".to_string(), "Exit");
-  let show = CustomMenuItem::new("show".to_string(), "Show");
-  let tray_menu = SystemTrayMenu::new()
-    .add_item(show)
-    .add_native_item(SystemTrayMenuItem::Separator)
-    .add_item(exit);
-
-  #[cfg(debug_assertions)]
-  let tray = SystemTray::new()
-    .with_tooltip("RSS Dev")
-    .with_menu(tray_menu);
-  #[cfg(not(debug_assertions))]
-  let tray = SystemTray::new().with_tooltip("RSS").with_menu(tray_menu);
-
   tauri::Builder::default()
-    .manage(AppState {
-      db: Default::default(),
-    })
-    .invoke_handler(tauri::generate_handler![
-      db_add_watch_keyword,
-      db_delete_seed,
-      db_delete_watch_keyword,
-      db_get_all_seeds,
-      db_get_articles,
-      db_get_setting,
-      db_get_unread_count,
-      db_get_watch_list,
-      db_insert_seed,
-      db_read_article,
-      db_read_all,
-      db_set_setting,
-      db_update_seed,
-      download,
-    ])
-    .setup(|app| {
+    .plugin(tauri_plugin_shell::init())
+    .manage(AppState::default())
+    .invoke_handler(builder.invoke_handler())
+    .setup(move |app| {
+      builder.mount_events(app);
+
+      //let exit = MenuItemBuilder::with_id("exit", "Exit").build(app)?;
+      let show = MenuItemBuilder::with_id("show", "Show").build(app)?;
+      let menu = MenuBuilder::new(app)
+        .item(&show)
+        .separator()
+        .quit()
+        .build()?;
+      let mut tray = TrayIconBuilder::new()
+        .icon(app.default_window_icon().unwrap().clone())
+        .title("RSS")
+        .tooltip("RSS")
+        .menu(&menu)
+        .show_menu_on_left_click(false)
+        .on_menu_event(move |app, event| match event.id().as_ref() {
+          "show" => {
+            show_main_window(app).unwrap();
+          }
+          _ => (),
+        })
+        .on_tray_icon_event(|tray_icon, event| match event {
+          tauri::tray::TrayIconEvent::DoubleClick { .. } => {
+            show_main_window(tray_icon.app_handle()).unwrap();
+          }
+          _ => (),
+        });
+
+      #[cfg(debug_assertions)]
+      {
+        tray = tray.tooltip("RSS Dev");
+      }
+
+      let _ = tray.build(app)?;
+
       let handle = app.handle();
       set_app_handle(&handle);
 
@@ -137,28 +146,12 @@ fn main() {
 
       Ok(())
     })
-    .system_tray(tray)
-    .on_system_tray_event(|app, event| match event {
-      SystemTrayEvent::DoubleClick { .. } => {
-        show_main_window(app).unwrap();
-      }
-      SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
-        "show" => {
-          show_main_window(app).unwrap();
-        }
-        "exit" => {
-          app.exit(0);
-        }
-        _ => {}
-      },
-      _ => {}
-    })
     .build(tauri::generate_context!())
     .expect("error while running tauri application")
     .run(|_app_handle, event| match event {
       tauri::RunEvent::ExitRequested { api, .. } => {
         api.prevent_exit();
       }
-      _ => {}
+      _ => (),
     });
 }

@@ -36,6 +36,12 @@ impl Serialize for Error {
   }
 }
 
+impl specta::Type for Error {
+  fn inline(_: &mut specta::TypeMap, _: specta::Generics) -> specta::datatype::DataType {
+    specta::datatype::DataType::Any
+  }
+}
+
 impl From<anyhow::Error> for Error {
   fn from(value: anyhow::Error) -> Self {
     Self(value)
