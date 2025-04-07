@@ -1336,10 +1336,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tauri-apps/api@npm:2.4.0, @tauri-apps/api@npm:^2.0.0":
+"@tauri-apps/api@npm:^2.0.0":
   version: 2.4.0
   resolution: "@tauri-apps/api@npm:2.4.0"
   checksum: 10/97772d37f9793f9d1bf2d7c100083e58dd0c89193b8942287e12adee68290e2ef4be2c3d53a25bb8e3c7e6715e2f3fd00bf857caaddc2547ebbd5ab203e95d86
+  languageName: node
+  linkType: hard
+
+"@tauri-apps/api@npm:^2.4.0":
+  version: 2.4.1
+  resolution: "@tauri-apps/api@npm:2.4.1"
+  checksum: 10/7a2c68db047c7ad09ac2a518ce41456190b8f4c5c4765c731a6193576d6a9e955b44c0e73a2d4f62b1b6b733537f180c1b42943d077d371d7a08004c95e6dbef
   languageName: node
   linkType: hard
 
@@ -1464,12 +1471,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tauri-apps/plugin-shell@npm:~2.2.0":
-  version: 2.2.0
-  resolution: "@tauri-apps/plugin-shell@npm:2.2.0"
+"@tauri-apps/plugin-shell@npm:^2.2.0":
+  version: 2.2.1
+  resolution: "@tauri-apps/plugin-shell@npm:2.2.1"
   dependencies:
     "@tauri-apps/api": "npm:^2.0.0"
-  checksum: 10/0dad5267941a02da4afd7599ef932c570f63f8b9884cef612e562dabc062aa4119185a811b02af7b9085a20acae651c6207ad3c12b39a257aee0e8b7e9dba5d3
+  checksum: 10/45dff3e0f8af716988bbe915abf91384b69d89ceb9ad6232ec619e4b692efb1063945bdd765416762f02f80c30a6c9102384a72b5a4087799171303cfa60a40c
   languageName: node
   linkType: hard
 
@@ -3280,9 +3287,9 @@ __metadata:
     "@radix-ui/react-toggle": "npm:^1.1.2"
     "@radix-ui/react-toggle-group": "npm:^1.1.2"
     "@tailwindcss/container-queries": "npm:^0.1.1"
-    "@tauri-apps/api": "npm:2.4.0"
+    "@tauri-apps/api": "npm:^2.4.0"
     "@tauri-apps/cli": "npm:^2.4.0"
-    "@tauri-apps/plugin-shell": "npm:~2.2.0"
+    "@tauri-apps/plugin-shell": "npm:^2.2.0"
     "@trivago/prettier-plugin-sort-imports": "npm:^5.2.2"
     "@types/node": "npm:^22.1.0"
     "@types/react": "npm:^18.3.20"

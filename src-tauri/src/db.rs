@@ -172,7 +172,7 @@ pub fn optimize() {
 #[specta::specta]
 pub async fn db_insert_seed(app_handle: AppHandle, name: String, url: String) -> bool {
   let result = app_handle.db(|db| -> Result<()> {
-    let mut stmt = db.prepare("INSERT INTO seeds (name, url, interval, last_fetched_at, last_fetch_ok) VALUES (?1, ?2, 10, 0, 0)")?;
+    let mut stmt = db.prepare("INSERT INTO seeds (name, url, interval, last_fetched_at, last_fetch_ok) VALUES (?1, ?2, 8, 0, 0)")?;
     stmt.execute([name, url])?;
 
     SeedAddEvent {}.emit(&app_handle).unwrap();

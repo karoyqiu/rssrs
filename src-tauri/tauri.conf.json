@@ -32,15 +32,8 @@
     ],
     "security": {
       "csp": {
-        "style-src": [
-          "'self'",
-          "'nonce-rWvh_Hd30vNJfto7tl9ve'",
-          "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='",
-          "'sha256-qixoDh78J8vISHKC3rLI7qSXmTShr8mhsUgjJL7W7aU='",
-          "'sha256-3gJFr3n77fnX5qwQpGju/zCOsoHW5RMqQd5XOb9WFcA='",
-          "'sha256-K/NeD53vB+5+2jizTdfGGkVkvm4CMfXJ5UTuQOzO8sY='"
-        ],
-        "connect-src": ["ipc: http://ipc.localhost"],
+        "style-src": ["'self'", "'unsafe-inline'"],
+        "connect-src": ["ipc:", "http://ipc.localhost"],
         "img-src": ["'self'", "https:", "data:"],
         "default-src": ["'self'"]
       }
