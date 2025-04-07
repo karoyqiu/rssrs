@@ -243,7 +243,7 @@ pub async fn check_seeds() -> Result<()> {
     }
 
     // 更新托盘图标工具提示
-    update_tray_tooltip(app_handle)?;
+    update_tray_tooltip(&app_handle)?;
   }
 
   Ok(())

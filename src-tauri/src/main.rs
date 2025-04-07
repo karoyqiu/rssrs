@@ -143,7 +143,7 @@ fn main() {
       let db = initialize(&handle, false).expect("Failed to initialize database");
       *state.db.lock().unwrap() = Some(db);
 
-      update_tray_tooltip(handle.clone())?;
+      update_tray_tooltip(handle)?;
 
       Ok(())
     })

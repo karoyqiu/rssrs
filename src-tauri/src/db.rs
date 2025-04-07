@@ -6,6 +6,7 @@ use rusqlite::types::Value;
 use rusqlite::{params, params_from_iter, Connection, OpenFlags, Result, Row};
 use serde::{Deserialize, Serialize};
 use specta::Type;
+use tauri::image::Image;
 use tauri::{AppHandle, Manager, State};
 use tauri_specta::Event;
 
@@ -513,7 +514,7 @@ pub async fn db_read_article(app_handle: AppHandle, item_id: i64, read: bool) ->
 
   result.unwrap();
 
-  update_tray_tooltip(app_handle).unwrap();
+  update_tray_tooltip(&app_handle).unwrap();
   true
 }
 
@@ -568,7 +569,7 @@ pub async fn db_read_all(app_handle: AppHandle, seed_id: Option<i64>) -> bool {
 
   result.unwrap();
 
-  update_tray_tooltip(app_handle).unwrap();
+  update_tray_tooltip(&app_handle).unwrap();
   true
 }
 
@@ -675,23 +676,26 @@ pub async fn db_set_setting(app_handle: AppHandle, key: String, value: String) -
 }
 
 /// 更新托盘图标工具提示
-pub fn update_tray_tooltip(app_handle: AppHandle) -> anyhow::Result<()> {
+pub fn update_tray_tooltip(app_handle: &AppHandle) -> anyhow::Result<()> {
   if let Some(tray) = app_handle.tray_by_id("main") {
-    let unread = db_get_unread_count(app_handle, None);
+    let unread = db_get_unread_count(app_handle.clone(), None);
     let title = if cfg!(debug_assertions) {
       "RSS Dev"
     } else {
       "RSS"
     };
 
-    let title = if unread > 0 {
-      format!("{} ({} unread articles)", title, unread)
+    let (title, icon) = if unread > 0 {
+      let img = Image::from_bytes(include_bytes!("../icons/16x16Dot.png"))?;
+      (format!("{} ({} unread articles)", title, unread), img)
     } else {
-      title.to_string()
+      let img = app_handle.default_window_icon().unwrap().clone();
+      (title.to_string(), img)
     };
 
     tray.set_tooltip(Some(&title))?;
     tray.set_title(Some(title))?;
+    tray.set_icon(Some(icon))?;
   }
 
   Ok(())
