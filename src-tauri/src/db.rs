@@ -141,13 +141,25 @@ pub fn optimize() {
   let app_handle = get_app_handle();
 
   if let Some(app_handle) = app_handle {
-    let _ = app_handle.db(|db| -> Result<()> {
+    let _ = app_handle.db_mut(|db| -> Result<()> {
       let now = Local::now();
-      let deadline = now.checked_sub_days(Days::new(30)).unwrap().timestamp();
-      db.execute(
-        "DELETE FROM articles WHERE unread = ?1 AND pub_date < ?2",
-        [0, deadline],
-      )?;
+      let seeds = get_all_seeds(db)?;
+
+      let tx = db.transaction()?;
+
+      for seed in seeds {
+        let deadline = now
+          .checked_sub_days(Days::new(seed.reserved_in_days.unwrap_or(30)))
+          .unwrap()
+          .timestamp();
+        tx.execute(
+          "DELETE FROM articles WHERE seed_id = ?1 AND unread = ?2 AND pub_date < ?3",
+          [seed.id, 0, deadline],
+        )?;
+      }
+
+      tx.commit()?;
+
       db.execute_batch("PRAGMA optimize; VACUUM; PRAGMA wal_checkpoint(truncate);")?;
       Ok(())
     });
@@ -232,6 +244,14 @@ pub fn get_all_seeds(db: &Connection) -> Result<Vec<Seed>> {
   }
 
   Ok(items)
+}
+
+pub fn get_seed(db: &Connection, id: i64) -> Result<Seed> {
+  let mut stmt = db.prepare("SELECT * FROM seeds WHERE id = ?1")?;
+  let mut rows = stmt.query([id])?;
+  let row = rows.next()?;
+  let row = row.unwrap();
+  to_seed(row)
 }
 
 /// 获取所有种子。

@@ -15,7 +15,7 @@ use tauri_specta::Event;
 
 use crate::{
   app_handle::get_app_handle,
-  db::{get_all_seeds, initialize, DbAccess},
+  db::{get_all_seeds, get_seed, initialize, DbAccess},
   error::IntoResult,
   events::SeedNewEvent,
   seed::Seed,
@@ -87,10 +87,32 @@ fn insert_items(app_handle: &AppHandle, seed_id: i64, items: &Vec<Item>) -> Resu
     let tx = db.transaction()?;
     let mut total = 0;
 
+    let seed = get_seed(&tx, seed_id)?;
+
     {
       let mut stmt = tx.prepare("INSERT OR IGNORE INTO articles (seed_id, guid, title, author, desc, link, pub_date, unread) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)")?;
       let now = Local::now();
-      let deadline = now.checked_sub_days(Days::new(30)).unwrap();
+      let deadline = {
+        let mut days = seed.reserved_in_days.unwrap_or(30);
+        let mut deadline = now.checked_sub_days(Days::new(days)).unwrap();
+        let first = items.first().unwrap();
+
+        if let Some(date) = &first.pub_date {
+          let date = DateTime::parse_from_rfc2822(date.as_str())?;
+
+          while date < deadline {
+            days += 30;
+            deadline = deadline.checked_sub_days(Days::new(days)).unwrap();
+          }
+        }
+
+        if seed.reserved_in_days != Some(days) {
+          let mut stmt = tx.prepare("UPDATE seeds SET reserved_in_days = ?2 WHERE id = ?1")?;
+          stmt.execute(params![seed_id, days])?;
+        }
+
+        deadline
+      };
 
       for item in items {
         let guid = if let Some(guid) = &item.guid {
@@ -99,24 +121,26 @@ fn insert_items(app_handle: &AppHandle, seed_id: i64, items: &Vec<Item>) -> Resu
           None
         };
 
-        if let Some(date) = &item.pub_date {
-          let date = DateTime::parse_from_rfc2822(date.as_str())?;
-
-          if date > deadline {
-            let date = date.timestamp();
-            let inserted = stmt.execute(params![
-              seed_id,
-              guid,
-              item.title,
-              item.author,
-              item.description,
-              item.link,
-              date,
-              true,
-            ])?;
-            total += inserted;
-          }
+        let date = if let Some(date) = &item.pub_date {
+          DateTime::parse_from_rfc2822(date.as_str())?
+        } else {
+          now.into()
         };
+
+        if date > deadline {
+          let date = date.timestamp();
+          let inserted = stmt.execute(params![
+            seed_id,
+            guid,
+            item.title,
+            item.author,
+            item.description,
+            item.link,
+            date,
+            true,
+          ])?;
+          total += inserted;
+        }
       }
     }
 
@@ -171,10 +195,14 @@ async fn fetch(
   }
 
   let channel = Channel::read_from(&content[..])?;
-  #[cfg(debug_assertions)]
-  debug!("First item {:?}", &channel.items[0]);
 
-  insert_items(app_handle, seed.id, &channel.items)?;
+  if !channel.items.is_empty() {
+    debug!("First item {:?}", &channel.items[0]);
+    insert_items(app_handle, seed.id, &channel.items)?;
+  } else {
+    warn!("Empty channel");
+  }
+
   info!("Fetched {}", &seed.name);
 
   Ok(())
