@@ -15,7 +15,7 @@ use tauri_specta::Event;
 
 use crate::{
   app_handle::get_app_handle,
-  db::{get_all_seeds, get_seed, initialize, DbAccess},
+  db::{get_all_seeds, get_seed, initialize, update_tray_tooltip, DbAccess},
   error::IntoResult,
   events::SeedNewEvent,
   seed::Seed,
@@ -241,6 +241,9 @@ pub async fn check_seeds() -> Result<()> {
         }
       }
     }
+
+    // 更新托盘图标工具提示
+    update_tray_tooltip(app_handle)?;
   }
 
   Ok(())

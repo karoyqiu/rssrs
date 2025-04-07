@@ -293,7 +293,7 @@ fn get_unread_count(db: &Connection, seed_id: Option<i64>) -> Result<i32> {
 /// 获取未读数量。
 #[tauri::command]
 #[specta::specta]
-pub async fn db_get_unread_count(app_handle: AppHandle, seed_id: Option<i64>) -> i32 {
+pub fn db_get_unread_count(app_handle: AppHandle, seed_id: Option<i64>) -> i32 {
   let result = app_handle.db(|db| -> Result<i32> { get_unread_count(db, seed_id) });
 
   result.unwrap()
@@ -512,6 +512,8 @@ pub async fn db_read_article(app_handle: AppHandle, item_id: i64, read: bool) ->
   });
 
   result.unwrap();
+
+  update_tray_tooltip(app_handle).unwrap();
   true
 }
 
@@ -565,6 +567,8 @@ pub async fn db_read_all(app_handle: AppHandle, seed_id: Option<i64>) -> bool {
   });
 
   result.unwrap();
+
+  update_tray_tooltip(app_handle).unwrap();
   true
 }
 
@@ -668,4 +672,27 @@ pub async fn db_set_setting(app_handle: AppHandle, key: String, value: String) -
   });
 
   result.is_ok()
+}
+
+/// 更新托盘图标工具提示
+pub fn update_tray_tooltip(app_handle: AppHandle) -> anyhow::Result<()> {
+  if let Some(tray) = app_handle.tray_by_id("main") {
+    let unread = db_get_unread_count(app_handle, None);
+    let title = if cfg!(debug_assertions) {
+      "RSS Dev"
+    } else {
+      "RSS"
+    };
+
+    let title = if unread > 0 {
+      format!("{} ({} unread articles)", title, unread)
+    } else {
+      title.to_string()
+    };
+
+    tray.set_tooltip(Some(&title))?;
+    tray.set_title(Some(title))?;
+  }
+
+  Ok(())
 }

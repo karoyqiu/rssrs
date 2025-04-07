@@ -12,7 +12,8 @@ use app_handle::set_app_handle;
 use db::{
   db_add_watch_keyword, db_delete_seed, db_delete_watch_keyword, db_get_all_seeds, db_get_articles,
   db_get_setting, db_get_unread_count, db_get_watch_list, db_insert_seed, db_read_all,
-  db_read_article, db_set_setting, db_update_seed, initialize, optimize, AppState,
+  db_read_article, db_set_setting, db_update_seed, initialize, optimize, update_tray_tooltip,
+  AppState,
 };
 use events::{
   ArticleReadEvent, SeedAddEvent, SeedNewEvent, SeedUnreadCountEvent, WatchlistChangeEvent,
@@ -114,7 +115,8 @@ fn main() {
         .separator()
         .quit()
         .build()?;
-      let mut tray = TrayIconBuilder::new()
+
+      let _ = TrayIconBuilder::with_id("main")
         .icon(app.default_window_icon().unwrap().clone())
         .title("RSS")
         .tooltip("RSS")
@@ -131,14 +133,8 @@ fn main() {
             show_main_window(tray_icon.app_handle()).unwrap();
           }
           _ => (),
-        });
-
-      #[cfg(debug_assertions)]
-      {
-        tray = tray.tooltip("RSS Dev");
-      }
-
-      let _ = tray.build(app)?;
+        })
+        .build(app)?;
 
       let handle = app.handle();
       set_app_handle(&handle);
@@ -146,6 +142,8 @@ fn main() {
       let state: State<AppState> = handle.state();
       let db = initialize(&handle, false).expect("Failed to initialize database");
       *state.db.lock().unwrap() = Some(db);
+
+      update_tray_tooltip(handle.clone())?;
 
       Ok(())
     })
