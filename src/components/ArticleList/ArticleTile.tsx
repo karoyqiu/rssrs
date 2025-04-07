@@ -41,7 +41,7 @@ export default function ArticleTile(props: ArticleTileProps) {
         className="flex grow cursor-pointer flex-col items-center overflow-hidden"
         onClick={openLink}
       >
-        <ArticleCover desc={article.desc} link={article.link} />
+        <ArticleCover desc={article.desc ?? ''} link={article.link} />
       </div>
       <div className="flex w-full flex-col gap-px p-2 text-start">
         <Highlighter

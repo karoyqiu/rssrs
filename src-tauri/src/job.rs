@@ -121,25 +121,23 @@ fn insert_items(app_handle: &AppHandle, seed_id: i64, items: &Vec<Item>) -> Resu
           None
         };
 
-        let date = if let Some(date) = &item.pub_date {
-          DateTime::parse_from_rfc2822(date.as_str())?
-        } else {
-          now.into()
-        };
+        if let Some(date) = &item.pub_date {
+          let date = DateTime::parse_from_rfc2822(date.as_str())?;
 
-        if date > deadline {
-          let date = date.timestamp();
-          let inserted = stmt.execute(params![
-            seed_id,
-            guid,
-            item.title,
-            item.author,
-            item.description,
-            item.link,
-            date,
-            true,
-          ])?;
-          total += inserted;
+          if date > deadline {
+            let date = date.timestamp();
+            let inserted = stmt.execute(params![
+              seed_id,
+              guid,
+              item.title,
+              item.author,
+              item.description,
+              item.link,
+              date,
+              true,
+            ])?;
+            total += inserted;
+          }
         }
       }
     }
