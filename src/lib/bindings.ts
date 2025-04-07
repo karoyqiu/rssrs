@@ -134,15 +134,15 @@ seed_name: string;
 /**
  * 标题
  */
-title: string | null; 
+title?: string | null; 
 /**
  * 作者
  */
-author: string | null; 
+author?: string | null; 
 /**
  * 描述
  */
-desc: string | null; 
+desc?: string | null; 
 /**
  * 链接
  */
@@ -192,7 +192,7 @@ url: string;
  * * TODO: 保存 URL 或 base64，估计是后者
  * 
  */
-favicon: string | null; 
+favicon?: string | null; 
 /**
  * 更新周期，分钟
  */
@@ -204,7 +204,11 @@ last_fetched_at: number;
 /**
  * 最近抓取是否成功
  */
-last_fetch_ok: boolean }
+last_fetch_ok: boolean; 
+/**
+ * 文章保留时长
+ */
+reserved_in_days?: number | null }
 /**
  * 种子添加事件
  */

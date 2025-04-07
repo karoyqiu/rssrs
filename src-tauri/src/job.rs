@@ -144,10 +144,13 @@ fn insert_items(app_handle: &AppHandle, seed_id: i64, items: &Vec<Item>) -> Resu
       }
     }
 
-    tx.commit()?;
-
     if total > 0 {
       info!("{total} new articles");
+
+      if total == items.len() && seed.interval > 10 {
+        let mut stmt = tx.prepare("UPDATE seeds SET interval = ?2 WHERE id = ?1")?;
+        stmt.execute(params![seed_id, 10])?;
+      }
 
       SeedNewEvent {
         id: Some(seed_id),
@@ -158,8 +161,16 @@ fn insert_items(app_handle: &AppHandle, seed_id: i64, items: &Vec<Item>) -> Resu
         id: None,
         unread_count: total as i32,
       }.emit(app_handle)?;
+    } else {
+      info!("No new article");
+
+      if seed.interval < 24 * 60 {
+        let mut stmt = tx.prepare("UPDATE seeds SET interval = ?2 WHERE id = ?1")?;
+        stmt.execute(params![seed_id, seed.interval + 10])?;
+      }
     }
 
+    tx.commit()?;
     Ok(())
   })
 }

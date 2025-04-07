@@ -16,6 +16,7 @@ pub struct Seed {
    *
    * TODO: 保存 URL 或 base64，估计是后者
    */
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub favicon: Option<String>,
   /** 更新周期，分钟 */
   pub interval: i32,
@@ -24,6 +25,7 @@ pub struct Seed {
   /** 最近抓取是否成功 */
   pub last_fetch_ok: bool,
   /** 文章保留时长 */
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub reserved_in_days: Option<u64>,
 }
 
@@ -56,10 +58,13 @@ pub struct Article {
   /// 种子名称
   pub seed_name: String,
   /// 标题
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub title: Option<String>,
   /// 作者
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub author: Option<String>,
   /// 描述
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub desc: Option<String>,
   /// 链接
   pub link: String,
