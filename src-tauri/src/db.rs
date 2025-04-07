@@ -13,7 +13,7 @@ use crate::app_handle::get_app_handle;
 use crate::events::{ArticleReadEvent, SeedAddEvent, SeedUnreadCountEvent, WatchlistChangeEvent};
 use crate::seed::{Article, Seed};
 
-const CURRENT_DB_VERSION: u32 = 4;
+const CURRENT_DB_VERSION: u32 = 5;
 
 #[derive(Default)]
 pub struct AppState {
@@ -102,8 +102,10 @@ fn upgrade_if_needed(db: &mut Connection, existing_version: u32) -> Result<()> {
         favicon TEXT,
         interval INTEGER,
         last_fetched_at INTEGER,
-        last_fetch_ok INTEGER
+        last_fetch_ok INTEGER,
+        reserved_in_days INTEGER
       );
+      ALTER TABLE seeds ADD COLUMN reserved_in_days INTEGER;
       CREATE TABLE IF NOT EXISTS articles (
         id INTEGER PRIMARY KEY,
         seed_id INTEGER NOT NULL REFERENCES seeds (id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -215,6 +217,7 @@ fn to_seed(row: &Row) -> Result<Seed> {
     interval: row.get("interval")?,
     last_fetched_at: row.get("last_fetched_at")?,
     last_fetch_ok: row.get("last_fetch_ok")?,
+    reserved_in_days: row.get("reserved_in_days")?,
   })
 }
 

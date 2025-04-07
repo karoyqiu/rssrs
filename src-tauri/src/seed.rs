@@ -23,6 +23,8 @@ pub struct Seed {
   pub last_fetched_at: i64,
   /** 最近抓取是否成功 */
   pub last_fetch_ok: bool,
+  /** 文章保留时长 */
+  pub reserved_in_days: Option<u64>,
 }
 
 impl Seed {
