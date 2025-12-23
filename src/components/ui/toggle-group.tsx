@@ -18,7 +18,7 @@ const ToggleGroup = React.forwardRef<
   <ToggleGroupPrimitive.Root
     ref={ref}
     className={cn(
-      'flex items-center justify-center gap-1 data-[orientation=vertical]:flex-col data-[orientation=vertical]:[&>*]:w-full',
+      'flex items-center justify-center gap-1 data-[orientation=vertical]:flex-col *:data-[orientation=vertical]:w-full',
       className,
     )}
     {...props}

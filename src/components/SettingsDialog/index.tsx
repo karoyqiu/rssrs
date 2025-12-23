@@ -23,7 +23,7 @@ export default function SettingsDialog(props: SettingsDialogProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="h-[40rem] grid-rows-[auto_1fr]">
+      <DialogContent className="h-160 grid-rows-[auto_1fr]">
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
           <DialogDescription>Change the settings of the application.</DialogDescription>

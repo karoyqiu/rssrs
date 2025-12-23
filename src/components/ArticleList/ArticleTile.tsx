@@ -34,7 +34,7 @@ export default function ArticleTile(props: ArticleTileProps) {
   return (
     <article
       ref={ref}
-      className="flex h-[24rem] w-full flex-col overflow-hidden rounded border"
+      className="flex h-96 w-full flex-col overflow-hidden rounded border"
       data-test={article.id}
     >
       <div
