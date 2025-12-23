@@ -10,22 +10,22 @@ mod seed;
 
 use app_handle::set_app_handle;
 use db::{
-  db_add_watch_keyword, db_delete_seed, db_delete_watch_keyword, db_get_all_seeds, db_get_articles,
-  db_get_setting, db_get_unread_count, db_get_watch_list, db_insert_seed, db_read_all,
-  db_read_article, db_set_setting, db_update_seed, db_update_seeds_rank, initialize, optimize,
-  update_tray_tooltip, AppState,
+  AppState, db_add_watch_keyword, db_delete_seed, db_delete_watch_keyword, db_get_all_seeds,
+  db_get_articles, db_get_setting, db_get_unread_count, db_get_watch_list, db_insert_seed,
+  db_read_all, db_read_article, db_set_setting, db_update_seed, db_update_seeds_rank, initialize,
+  optimize, update_tray_tooltip,
 };
 use events::{
   ArticleReadEvent, SeedAddEvent, SeedNewEvent, SeedUnreadCountEvent, WatchlistChangeEvent,
 };
 use job::{check_seeds, download};
 use tauri::{
+  AppHandle, Manager, State,
   async_runtime::spawn,
   menu::{MenuBuilder, MenuItemBuilder},
   tray::TrayIconBuilder,
-  AppHandle, Manager, State,
 };
-use tokio_schedule::{every, Job};
+use tokio_schedule::{Job, every};
 
 fn show_main_window(app: &AppHandle) -> tauri::Result<()> {
   if let Some(window) = app.get_webview_window("main") {
@@ -103,7 +103,7 @@ fn main() {
   spawn(optimze_task);
 
   tauri::Builder::default()
-    .plugin(tauri_plugin_shell::init())
+    .plugin(tauri_plugin_opener::init())
     .manage(AppState::default())
     .invoke_handler(builder.invoke_handler())
     .setup(move |app| {

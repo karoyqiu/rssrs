@@ -1,4 +1,4 @@
-import { open } from '@tauri-apps/plugin-shell';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import { MailIcon, MailOpenIcon } from 'lucide-react';
 import Highlighter from 'react-highlight-words';
 import { useIntersectionObserver, useReadLocalStorage } from 'usehooks-ts';
@@ -27,7 +27,7 @@ export default function ArticleTile(props: ArticleTileProps) {
   });
 
   const openLink = () =>
-    Promise.all([open(article.link), commands.dbReadArticle(article.id, true)]);
+    Promise.all([openUrl(article.link), commands.dbReadArticle(article.id, true)]);
 
   const time = new Date(article.pub_date * 1000);
 
@@ -54,8 +54,8 @@ export default function ArticleTile(props: ArticleTileProps) {
           )}
           onClick={openLink}
         />
-        <address className="w-full text-sm text-muted-foreground">{article.seed_name}</address>
-        <div className="flex w-full items-center justify-between text-sm text-muted-foreground">
+        <address className="text-muted-foreground w-full text-sm">{article.seed_name}</address>
+        <div className="text-muted-foreground flex w-full items-center justify-between text-sm">
           <time dateTime={time.toISOString()}>{time.toLocaleString()}</time>
           {article.unread ? <MailIcon /> : <MailOpenIcon />}
         </div>

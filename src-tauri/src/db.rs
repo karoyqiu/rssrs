@@ -3,7 +3,7 @@ use std::vec;
 use chrono::{Days, Local};
 use log::info;
 use rusqlite::types::Value;
-use rusqlite::{params, params_from_iter, Connection, OpenFlags, Result, Row};
+use rusqlite::{Connection, OpenFlags, Result, Row, params, params_from_iter};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::image::Image;
@@ -207,10 +207,7 @@ pub async fn db_update_seed(
 /// 更新种子排序。
 #[tauri::command]
 #[specta::specta]
-pub async fn db_update_seeds_rank(
-  app_handle: AppHandle,
-  seed_ids: Vec<i64>,
-) -> bool {
+pub async fn db_update_seeds_rank(app_handle: AppHandle, seed_ids: Vec<i64>) -> bool {
   let result = app_handle.db(|db| -> Result<()> {
     let mut stmt = db.prepare("UPDATE seeds SET rank = ?2 WHERE id = ?1")?;
 
@@ -406,7 +403,10 @@ fn get_articles_with(
     }
   }
 
-  let sql = format!("SELECT articles.*, seeds.name FROM articles LEFT JOIN seeds ON articles.seed_id = seeds.id WHERE (pub_date < ?1 OR (pub_date = ?1 AND articles.id >= ?2)) AND unread != ?3 {} ORDER BY pub_date DESC, articles.id ASC LIMIT ?4", query);
+  let sql = format!(
+    "SELECT articles.*, seeds.name FROM articles LEFT JOIN seeds ON articles.seed_id = seeds.id WHERE (pub_date < ?1 OR (pub_date = ?1 AND articles.id >= ?2)) AND unread != ?3 {} ORDER BY pub_date DESC, articles.id ASC LIMIT ?4",
+    query
+  );
   let mut stmt = db.prepare(&sql)?;
 
   log::trace!("SQL: {}", &sql);

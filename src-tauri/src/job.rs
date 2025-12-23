@@ -1,13 +1,13 @@
 use anyhow::Result;
-use base64::{engine::general_purpose::STANDARD, Engine as _};
+use base64::{Engine as _, engine::general_purpose::STANDARD};
 use chrono::{DateTime, Days, Local};
 use log::{debug, info, warn};
 use reqwest::{
-  header::{CONTENT_TYPE, REFERER},
   Proxy,
+  header::{CONTENT_TYPE, REFERER},
 };
 use rss::{Channel, Item};
-use rusqlite::{params, Connection};
+use rusqlite::{Connection, params};
 use serde::Deserialize;
 use specta::Type;
 use tauri::AppHandle;
@@ -15,7 +15,7 @@ use tauri_specta::Event;
 
 use crate::{
   app_handle::get_app_handle,
-  db::{get_all_seeds, get_seed, initialize, update_tray_tooltip, DbAccess},
+  db::{DbAccess, get_all_seeds, get_seed, initialize, update_tray_tooltip},
   error::IntoResult,
   events::SeedNewEvent,
   seed::Seed,
