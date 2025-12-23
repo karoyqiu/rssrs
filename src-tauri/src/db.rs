@@ -14,7 +14,7 @@ use crate::app_handle::get_app_handle;
 use crate::events::{ArticleReadEvent, SeedAddEvent, SeedUnreadCountEvent, WatchlistChangeEvent};
 use crate::seed::{Article, Seed};
 
-const CURRENT_DB_VERSION: u32 = 5;
+const CURRENT_DB_VERSION: u32 = 6;
 
 #[derive(Default)]
 pub struct AppState {
@@ -106,7 +106,7 @@ fn upgrade_if_needed(db: &mut Connection, existing_version: u32) -> Result<()> {
         last_fetch_ok INTEGER,
         reserved_in_days INTEGER
       );
-      ALTER TABLE seeds ADD COLUMN reserved_in_days INTEGER;
+      ALTER TABLE seeds ADD COLUMN rank INTEGER;
       CREATE TABLE IF NOT EXISTS articles (
         id INTEGER PRIMARY KEY,
         seed_id INTEGER NOT NULL REFERENCES seeds (id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -204,6 +204,26 @@ pub async fn db_update_seed(
   result.is_ok()
 }
 
+/// 更新种子排序。
+#[tauri::command]
+#[specta::specta]
+pub async fn db_update_seed_rank(
+  app_handle: AppHandle,
+  seed_id: i64,
+  rank: i32,
+) -> bool {
+  let result = app_handle.db(|db| -> Result<()> {
+    let mut stmt = db.prepare("UPDATE seeds SET rank = ?2 WHERE id = ?1")?;
+    stmt.execute(params![seed_id, rank])?;
+
+    SeedAddEvent {}.emit(&app_handle).unwrap();
+
+    Ok(())
+  });
+
+  result.is_ok()
+}
+
 /// 删除种子。
 #[tauri::command]
 #[specta::specta]
@@ -231,12 +251,13 @@ fn to_seed(row: &Row) -> Result<Seed> {
     last_fetched_at: row.get("last_fetched_at")?,
     last_fetch_ok: row.get("last_fetch_ok")?,
     reserved_in_days: row.get("reserved_in_days")?,
+    rank: row.get("rank")?,
   })
 }
 
 /// 获取所有种子。
 pub fn get_all_seeds(db: &Connection) -> Result<Vec<Seed>> {
-  let mut stmt = db.prepare("SELECT * FROM seeds")?;
+  let mut stmt = db.prepare("SELECT * FROM seeds ORDER BY rank")?;
   let mut rows = stmt.query([])?;
   let mut items = Vec::new();
 

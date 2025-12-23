@@ -85,6 +85,12 @@ async dbUpdateSeed(seedId: number, name: string, url: string) : Promise<boolean>
     return await TAURI_INVOKE("db_update_seed", { seedId, name, url });
 },
 /**
+ * 更新种子排序。
+ */
+async dbUpdateSeedRank(seedId: number, rank: number) : Promise<boolean> {
+    return await TAURI_INVOKE("db_update_seed_rank", { seedId, rank });
+},
+/**
  * 下载指定 URL 的数据
  */
 async download(url: string, referer: string | null) : Promise<string> {
@@ -208,7 +214,11 @@ last_fetch_ok: boolean;
 /**
  * 文章保留时长
  */
-reserved_in_days?: number | null }
+reserved_in_days?: number | null; 
+/**
+ * 排序
+ */
+rank: number | null }
 /**
  * 种子添加事件
  */

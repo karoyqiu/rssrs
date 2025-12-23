@@ -12,8 +12,8 @@ use app_handle::set_app_handle;
 use db::{
   db_add_watch_keyword, db_delete_seed, db_delete_watch_keyword, db_get_all_seeds, db_get_articles,
   db_get_setting, db_get_unread_count, db_get_watch_list, db_insert_seed, db_read_all,
-  db_read_article, db_set_setting, db_update_seed, initialize, optimize, update_tray_tooltip,
-  AppState,
+  db_read_article, db_set_setting, db_update_seed, db_update_seed_rank, initialize, optimize,
+  update_tray_tooltip, AppState,
 };
 use events::{
   ArticleReadEvent, SeedAddEvent, SeedNewEvent, SeedUnreadCountEvent, WatchlistChangeEvent,
@@ -59,6 +59,7 @@ fn main() {
       db_read_all,
       db_set_setting,
       db_update_seed,
+      db_update_seed_rank,
       download,
     ])
     .events(tauri_specta::collect_events![

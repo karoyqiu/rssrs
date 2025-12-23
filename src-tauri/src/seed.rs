@@ -27,6 +27,8 @@ pub struct Seed {
   /** 文章保留时长 */
   #[serde(skip_serializing_if = "Option::is_none")]
   pub reserved_in_days: Option<u64>,
+  /** 排序 */
+  pub rank: Option<i32>,
 }
 
 impl Seed {
