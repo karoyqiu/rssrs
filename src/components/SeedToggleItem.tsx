@@ -31,7 +31,7 @@ export default function SeedToggleItem({ seed, index, ...props }: SeedToggleItem
   if (seed) {
     return (
       <ContextMenu>
-        <ContextMenuTrigger ref={ref} className="w-full" asChild>
+        <ContextMenuTrigger ref={ref} className="w-full">
           <ToggleGroupItem {...props} className="w-full justify-start" value={seed.id.toString()}>
             <div ref={handle}>
               <RssIcon />

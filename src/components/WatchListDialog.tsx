@@ -1,5 +1,5 @@
-import { MinusIcon, PlusIcon } from 'lucide-react';
-import { Fragment, type ReactNode, useRef } from 'react';
+import { MinusIcon, PlusIcon, SettingsIcon } from 'lucide-react';
+import { Fragment, useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -16,12 +16,7 @@ import useWatchList from '@/lib/useWatchList';
 
 import { ScrollArea } from './ui/scroll-area';
 
-type WatchListDialogProps = {
-  children: ReactNode;
-};
-
-export default function WatchListDialog(props: WatchListDialogProps) {
-  const { children } = props;
+export default function WatchListDialog() {
   const { keywords } = useWatchList();
   const keywordRef = useRef<HTMLInputElement>(null);
 
@@ -38,7 +33,9 @@ export default function WatchListDialog(props: WatchListDialogProps) {
 
   return (
     <Dialog>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogTrigger className="ms-auto">
+        <SettingsIcon />
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Watch list</DialogTitle>
@@ -64,7 +61,7 @@ export default function WatchListDialog(props: WatchListDialogProps) {
           </div>
           <hr />
           <ScrollArea>
-            <div className="grid grid-cols-[1fr_auto] items-center gap-x-2">
+            <div className="grid h-96 grid-cols-[1fr_auto] items-center gap-x-2">
               {keywords.map((k) => (
                 <Fragment key={k}>
                   <span>{k}</span>

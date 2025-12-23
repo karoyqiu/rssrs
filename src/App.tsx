@@ -66,12 +66,12 @@ function App() {
                 }
               }}
             >
-              <ToggleGroupItem className="justify-start rounded" value="-1">
-                <EyeIcon />
-                Watch list
-                <WatchListDialog>
-                  <SettingsIcon className="hover:text-primary ms-auto" />
-                </WatchListDialog>
+              <ToggleGroupItem asChild value="-1">
+                <div className="flex w-full">
+                  <EyeIcon />
+                  Watch list
+                  <WatchListDialog />
+                </div>
               </ToggleGroupItem>
               <SeedToggleItem seed={null} index={-1} />
               <DragDropProvider
