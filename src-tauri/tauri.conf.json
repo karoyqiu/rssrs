@@ -4,7 +4,8 @@
     "beforeDevCommand": "pnpm dev",
     "beforeBuildCommand": "pnpm build",
     "frontendDist": "../dist",
-    "devUrl": "http://localhost:1420"
+    "devUrl": "http://localhost:1420",
+    "removeUnusedCommands": true
   },
   "bundle": {
     "active": false,

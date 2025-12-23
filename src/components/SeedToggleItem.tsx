@@ -1,4 +1,5 @@
 import { EditIcon, ListIcon, RssIcon } from 'lucide-react';
+import type { ComponentProps } from 'react';
 
 import {
   ContextMenu,
@@ -12,24 +13,18 @@ import useSeedUnreadCount from '@/lib/useSeedUnreadCount';
 
 import SeedDialog from './SeedDialog';
 
-type SeedToggleItemProps = {
+type SeedToggleItemProps = Omit<ComponentProps<typeof ToggleGroupItem>, 'value'> & {
   seed: Pick<Seed, 'id' | 'name' | 'url'> | null;
 };
 
-const SeedToggleItem = function SeedToggleItem({
-  ref,
-  ...props
-}: SeedToggleItemProps & {
-  ref?: React.RefObject<HTMLButtonElement>;
-}) {
-  const { seed } = props;
+export default function SeedToggleItem({ seed, ...props }: SeedToggleItemProps) {
   const unread = useSeedUnreadCount(seed?.id ?? null);
 
   if (seed) {
     return (
       <ContextMenu>
         <ContextMenuTrigger className="w-full">
-          <ToggleGroupItem ref={ref} className="w-full justify-start" value={seed.id.toString()}>
+          <ToggleGroupItem {...props} className="w-full justify-start" value={seed.id.toString()}>
             <RssIcon />
             <span>{seed.name}</span>
             <span className="ms-auto font-mono">{unread || ''}</span>
@@ -46,12 +41,10 @@ const SeedToggleItem = function SeedToggleItem({
   }
 
   return (
-    <ToggleGroupItem ref={ref} className="justify-start" value="0">
+    <ToggleGroupItem {...props} className="justify-start" value="0">
       <ListIcon />
       <span>All</span>
       <span className="ms-auto font-mono">{unread || ''}</span>
     </ToggleGroupItem>
   );
-};
-
-export default SeedToggleItem;
+}
