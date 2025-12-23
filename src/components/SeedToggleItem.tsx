@@ -10,7 +10,7 @@ import { ToggleGroupItem } from '@/components/ui/toggle-group';
 import type { Seed } from '@/lib/bindings';
 import useSeedUnreadCount from '@/lib/useSeedUnreadCount';
 
-import EditSeedDialog from './EditSeedDialog';
+import SeedDialog from './SeedDialog';
 
 type SeedToggleItemProps = {
   seed: Pick<Seed, 'id' | 'name' | 'url'> | null;
@@ -36,7 +36,7 @@ const SeedToggleItem = function SeedToggleItem({
           </ToggleGroupItem>
         </ContextMenuTrigger>
         <ContextMenuContent>
-          <ContextMenuItem className="gap-2" onClick={() => EditSeedDialog.call({ seed })}>
+          <ContextMenuItem className="gap-2" onClick={() => SeedDialog.call({ seed })}>
             <EditIcon />
             Edit
           </ContextMenuItem>

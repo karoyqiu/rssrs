@@ -3,7 +3,7 @@ import { SaveIcon } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { z } from 'zod';
+import { z } from 'zod/v4-mini';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -30,22 +30,24 @@ const proxySchema = z
   .object({
     type: z.enum(['none', 'sys', 'http']),
     host: z.string(),
-    port: z.coerce.number().int().min(0).max(65535),
+    port: z.coerce.number().check(z.int(), z.minimum(0), z.maximum(65535)),
   })
-  .refine((arg) => arg.type !== 'http' || (arg.host.length > 0 && arg.port > 0))
-  .refine((arg) => {
-    if (arg.host.length === 0) {
-      return {
-        message: 'Hostname must not be empty.',
-        path: ['host'],
-      };
-    }
+  .check(
+    z.refine((arg) => arg.type !== 'http' || (arg.host.length > 0 && arg.port > 0)),
+    z.refine((arg) => {
+      if (arg.host.length === 0) {
+        return {
+          message: 'Hostname must not be empty.',
+          path: ['host'],
+        };
+      }
 
-    return {
-      message: 'Port must not be zero.',
-      path: ['port'],
-    };
-  });
+      return {
+        message: 'Port must not be zero.',
+        path: ['port'],
+      };
+    }),
+  );
 
 export type ProxySettings = z.infer<typeof proxySchema>;
 

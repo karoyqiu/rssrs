@@ -3,7 +3,7 @@ import { SaveIcon } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { z } from 'zod';
+import { z } from 'zod/v4-mini';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -28,7 +28,7 @@ import { Textarea } from '@/components/ui/textarea';
 import useSettings from '@/lib/useSettings';
 
 const genericSchema = z.object({
-  timeout: z.coerce.number().int().min(0),
+  timeout: z.coerce.number().check(z.int(), z.minimum(0)),
   ads: z.string(),
 });
 

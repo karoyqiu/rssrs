@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { useDefaultLayout } from 'react-resizable-panels';
 import { useDebounceValue, useLocalStorage } from 'usehooks-ts';
 
-import AddSeedDialog from '@/components/AddSeedDialog';
 import ArticleList from '@/components/ArticleList';
+import SeedDialog from '@/components/SeedDialog';
 import SeedToggleItem from '@/components/SeedToggleItem';
 import SettingsDialog from '@/components/SettingsDialog';
 import WatchListDialog from '@/components/WatchListDialog';
@@ -18,8 +18,6 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import '@/globals.css';
 import { commands } from '@/lib/bindings';
 import useSeeds from '@/lib/useSeeds';
-
-import EditSeedDialog from './components/EditSeedDialog';
 
 const appWindow = getCurrentWebviewWindow();
 
@@ -49,11 +47,9 @@ function App() {
         <div className="flex h-full flex-col gap-2 p-2">
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground ps-2 text-sm">Seeds</span>
-            <AddSeedDialog>
-              <Button variant="ghost" size="icon">
-                <PlusIcon />
-              </Button>
-            </AddSeedDialog>
+            <Button variant="ghost" size="icon" onClick={() => SeedDialog.call({})}>
+              <PlusIcon />
+            </Button>
           </div>
           <ScrollArea className="grow">
             <ToggleGroup
@@ -120,7 +116,7 @@ function App() {
             />
           </ScrollArea>
         </div>
-        <EditSeedDialog.Root />
+        <SeedDialog.Root />
       </ResizablePanel>
     </ResizablePanelGroup>
   );
