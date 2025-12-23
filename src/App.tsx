@@ -58,6 +58,7 @@ function App() {
               className="mt-2"
               type="single"
               orientation="vertical"
+              spacing={1}
               value={seedId.toString()}
               onValueChange={(value) => {
                 if (value.length > 0) {
@@ -65,7 +66,7 @@ function App() {
                 }
               }}
             >
-              <ToggleGroupItem className="justify-start" value="-1">
+              <ToggleGroupItem className="justify-start rounded" value="-1">
                 <EyeIcon />
                 Watch list
                 <WatchListDialog>
@@ -87,34 +88,36 @@ function App() {
         </div>
       </ResizablePanel>
       <ResizableHandle />
-      <ResizablePanel minSize={50} className="flex flex-col">
-        <div className="flex gap-1 border-b p-1">
-          <Toggle pressed={autoRead} onPressedChange={setAutoRead}>
-            Auto read
-          </Toggle>
-          <Toggle pressed={unreadOnly} onPressedChange={setUnreadOnly}>
-            Unread only
-          </Toggle>
-          <Button disabled={seedId < 0} onClick={() => commands.dbReadAll(seedId)}>
-            Read all
-          </Button>
-          <div className="relative flex-1">
-            <SearchIcon className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
-            <Input
-              className="pl-10"
-              type="search"
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search"
-            />
+      <ResizablePanel minSize={50}>
+        <div className="flex h-full flex-col">
+          <div className="flex gap-1 border-b p-1">
+            <Toggle pressed={autoRead} onPressedChange={setAutoRead}>
+              Auto read
+            </Toggle>
+            <Toggle pressed={unreadOnly} onPressedChange={setUnreadOnly}>
+              Unread only
+            </Toggle>
+            <Button disabled={seedId < 0} onClick={() => commands.dbReadAll(seedId)}>
+              Read all
+            </Button>
+            <div className="relative flex-1">
+              <SearchIcon className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
+              <Input
+                className="pl-10"
+                type="search"
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search"
+              />
+            </div>
           </div>
+          <ScrollArea className="@container min-h-0 w-full">
+            <ArticleList
+              seedId={seedId === 0 ? null : seedId}
+              search={search}
+              unreadOnly={unreadOnly}
+            />
+          </ScrollArea>
         </div>
-        <ScrollArea className="@container w-full">
-          <ArticleList
-            seedId={seedId === 0 ? null : seedId}
-            search={search}
-            unreadOnly={unreadOnly}
-          />
-        </ScrollArea>
       </ResizablePanel>
     </ResizablePanelGroup>
   );

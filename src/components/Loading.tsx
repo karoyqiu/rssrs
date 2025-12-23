@@ -1,9 +1,15 @@
 import { LoaderCircleIcon, type LucideProps } from 'lucide-react';
-import { forwardRef } from 'react';
 
 import { cn } from '@/lib/utils';
 
-const Loading = forwardRef<SVGSVGElement, LucideProps>((props, ref) => {
+const Loading = (
+  {
+    ref,
+    ...props
+  }: LucideProps & {
+    ref: React.RefObject<SVGSVGElement>;
+  }
+) => {
   const { className, ...rest } = props;
 
   return (
@@ -14,6 +20,6 @@ const Loading = forwardRef<SVGSVGElement, LucideProps>((props, ref) => {
       {...rest}
     />
   );
-});
+};
 
 export default Loading;

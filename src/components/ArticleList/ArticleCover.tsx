@@ -1,5 +1,5 @@
 import { ImageOff } from 'lucide-react';
-import { useMemo, useRef } from 'react';
+import { type RefObject, useMemo, useRef } from 'react';
 import { useEventListener } from 'usehooks-ts';
 
 import { commands } from '@/lib/bindings';
@@ -16,7 +16,7 @@ export default function ArticleCover(props: ArticleCoverProps) {
   const { desc, link } = props;
   const [generic] = useSettings('generic', defaultGenericSettings);
   const ads = useMemo(() => generic.ads.split('\n').map((p) => new RegExp(p, 'i')), [generic.ads]);
-  let imgRef = useRef<HTMLImageElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   useEventListener(
     'error',
@@ -25,13 +25,13 @@ export default function ArticleCover(props: ArticleCoverProps) {
         imgRef.current.src = await commands.download(imgRef.current.src, link);
       }
     },
-    imgRef,
+    imgRef as RefObject<HTMLImageElement>,
     { once: true, passive: true },
   );
 
   if (!desc) {
     return (
-      <div className="w-full h-full flex items-center">
+      <div className="flex h-full w-full items-center">
         <ImageOff className="text-muted-foreground m-auto" />
       </div>
     );

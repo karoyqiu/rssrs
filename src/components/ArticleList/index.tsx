@@ -38,7 +38,7 @@ export default function ArticleList(props: ArticleListProps) {
   });
   const topRef = useRef<HTMLDivElement>(null);
 
-  const toastId = useRef<string | number>();
+  const toastId = useRef<string | number>(0);
 
   const newHandler = useCallback(
     ({ payload }: Event<SeedNewEvent>) => {
