@@ -1,4 +1,3 @@
-import { arrayMove } from '@dnd-kit/sortable';
 import { useCallback, useEffect, useState } from 'react';
 
 import { type Seed, commands } from './bindings';
@@ -11,16 +10,18 @@ const useSeeds = () => {
     commands.dbGetAllSeeds().then(setSeeds);
   }, []);
 
-  const reorder = useCallback((oldId: number, newId: number) => {
-    setSeeds((items) => {
-      const oldIndex = items.findIndex((s) => s.id === oldId);
-      const newIndex = items.findIndex((s) => s.id === newId);
-      const sorted = arrayMove(items, oldIndex, newIndex);
+  const reorder = useCallback((oldIndex: number, newIndex: number) => {
+    if (oldIndex !== newIndex) {
+      setSeeds((items) => {
+        const sorted = [...items];
+        const item = sorted.splice(oldIndex, 1);
+        sorted.splice(newIndex, 0, ...item);
 
-      commands.dbUpdateSeedsRank(sorted.map((s) => s.id));
+        commands.dbUpdateSeedsRank(sorted.map((s) => s.id));
 
-      return sorted;
-    });
+        return sorted;
+      });
+    }
   }, []);
 
   useEffect(() => {

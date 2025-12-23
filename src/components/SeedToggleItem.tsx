@@ -1,5 +1,6 @@
+import { useSortable } from '@dnd-kit/react/sortable';
 import { EditIcon, ListIcon, RssIcon } from 'lucide-react';
-import type { ComponentProps } from 'react';
+import { type ComponentProps, useRef } from 'react';
 
 import {
   ContextMenu,
@@ -15,17 +16,26 @@ import SeedDialog from './SeedDialog';
 
 type SeedToggleItemProps = Omit<ComponentProps<typeof ToggleGroupItem>, 'value'> & {
   seed: Pick<Seed, 'id' | 'name' | 'url'> | null;
+  index: number;
 };
 
-export default function SeedToggleItem({ seed, ...props }: SeedToggleItemProps) {
+export default function SeedToggleItem({ seed, index, ...props }: SeedToggleItemProps) {
+  const handle = useRef<HTMLDivElement>(null);
+  const { ref } = useSortable({
+    id: seed?.id ?? 0,
+    index,
+    handle,
+  });
   const unread = useSeedUnreadCount(seed?.id ?? null);
 
   if (seed) {
     return (
       <ContextMenu>
-        <ContextMenuTrigger className="w-full">
+        <ContextMenuTrigger ref={ref} className="w-full" asChild>
           <ToggleGroupItem {...props} className="w-full justify-start" value={seed.id.toString()}>
-            <RssIcon />
+            <div ref={handle}>
+              <RssIcon />
+            </div>
             <span>{seed.name}</span>
             <span className="ms-auto font-mono">{unread || ''}</span>
           </ToggleGroupItem>

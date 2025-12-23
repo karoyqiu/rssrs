@@ -1,17 +1,5 @@
-import {
-  DndContext,
-  DragOverlay,
-  KeyboardSensor,
-  PointerSensor,
-  type UniqueIdentifier,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
+import { DragDropProvider } from '@dnd-kit/react';
+import { isSortable } from '@dnd-kit/react/sortable';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { EyeIcon, PlusIcon, SearchIcon, SettingsIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -33,13 +21,10 @@ import '@/globals.css';
 import { commands } from '@/lib/bindings';
 import useSeeds from '@/lib/useSeeds';
 
-import SortableSeedToggleItem from './components/SortableSeedToggleItem';
-
 const appWindow = getCurrentWebviewWindow();
 
 function App() {
   const [seedId, setSeedId] = useState(0);
-  const [activeId, setActiveId] = useState<UniqueIdentifier>(0);
   const [search, setSearch] = useDebounceValue('', 500);
   const [autoRead, setAutoRead] = useLocalStorage('autoRead', true);
   const [unreadOnly, setUnreadOnly] = useLocalStorage('unreadOnly', true);
@@ -50,12 +35,6 @@ function App() {
     storage: localStorage,
   });
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
   useEffect(() => {
     appWindow.show();
   }, []);
@@ -94,29 +73,20 @@ function App() {
                   <SettingsIcon className="hover:text-primary ms-auto" />
                 </WatchListDialog>
               </ToggleGroupItem>
-              <SeedToggleItem seed={null} />
-              <DndContext
-                sensors={sensors}
-                onDragStart={({ active }) => setActiveId(active.id)}
-                onDragEnd={async ({ active, over }) => {
-                  if (active.id !== over?.id) {
-                    reorder(active.id as number, (over?.id as number) ?? 0);
+              <SeedToggleItem seed={null} index={-1} />
+              <DragDropProvider
+                onDragEnd={({ operation: { source }, canceled }) => {
+                  if (!canceled && isSortable(source)) {
+                    const fromIndex = source.sortable.initialIndex;
+                    const toIndex = source.sortable.index;
+                    reorder(fromIndex, toIndex);
                   }
-
-                  setActiveId(0);
                 }}
               >
-                <SortableContext items={seeds} strategy={verticalListSortingStrategy}>
-                  {seeds.map((seed) => (
-                    <SortableSeedToggleItem key={seed.id} seed={seed} />
-                  ))}
-                </SortableContext>
-                <DragOverlay>
-                  {activeId && (
-                    <SeedToggleItem seed={seeds.find((s) => s.id === activeId) ?? null} />
-                  )}
-                </DragOverlay>
-              </DndContext>
+                {seeds.map((seed, index) => (
+                  <SeedToggleItem key={seed.id} seed={seed} index={index} />
+                ))}
+              </DragDropProvider>
             </ToggleGroup>
           </ScrollArea>
           <SettingsDialog>
