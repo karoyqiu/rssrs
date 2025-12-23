@@ -55,17 +55,5 @@
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.2",
     "vite": "^5.4.15"
-  },
-  "packageManager": "yarn@4.7.0",
-  "dependenciesMeta": {
-    "@trivago/prettier-plugin-sort-imports@4.3.0": {
-      "unplugged": true
-    },
-    "prettier-plugin-organize-attributes@1.0.0": {
-      "unplugged": true
-    },
-    "prettier-plugin-tailwindcss@0.6.5": {
-      "unplugged": true
-    }
   }
 }
