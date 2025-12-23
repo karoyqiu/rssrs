@@ -1,6 +1,7 @@
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { EyeIcon, PlusIcon, SearchIcon, SettingsIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useDefaultLayout } from 'react-resizable-panels';
 import { useDebounceValue, useLocalStorage } from 'usehooks-ts';
 
 import AddSeedDialog from '@/components/AddSeedDialog';
@@ -27,16 +28,25 @@ function App() {
   const [unreadOnly, setUnreadOnly] = useLocalStorage('unreadOnly', true);
   const { seeds } = useSeeds();
 
+  const { defaultLayout, onLayoutChange } = useDefaultLayout({
+    id: 'root',
+    storage: localStorage,
+  });
+
   useEffect(() => {
     appWindow.show();
   }, []);
 
   return (
-    <ResizablePanelGroup direction="horizontal" autoSaveId="root">
+    <ResizablePanelGroup
+      orientation="horizontal"
+      defaultLayout={defaultLayout}
+      onLayoutChange={onLayoutChange}
+    >
       <ResizablePanel defaultSize={20} minSize={10}>
         <div className="flex h-full flex-col gap-2 p-2">
           <div className="flex items-center justify-between">
-            <span className="ps-2 text-sm text-muted-foreground">Seeds</span>
+            <span className="text-muted-foreground ps-2 text-sm">Seeds</span>
             <AddSeedDialog>
               <Button variant="ghost" size="icon">
                 <PlusIcon />
@@ -59,7 +69,7 @@ function App() {
                 <EyeIcon />
                 Watch list
                 <WatchListDialog>
-                  <SettingsIcon className="ms-auto hover:text-primary" />
+                  <SettingsIcon className="hover:text-primary ms-auto" />
                 </WatchListDialog>
               </ToggleGroupItem>
               <SeedToggleItem seed={null} />
@@ -89,7 +99,7 @@ function App() {
             Read all
           </Button>
           <div className="relative flex-1">
-            <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <SearchIcon className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
             <Input
               className="pl-10"
               type="search"
@@ -98,7 +108,7 @@ function App() {
             />
           </div>
         </div>
-        <ScrollArea className="w-full @container">
+        <ScrollArea className="@container w-full">
           <ArticleList
             seedId={seedId === 0 ? null : seedId}
             search={search}

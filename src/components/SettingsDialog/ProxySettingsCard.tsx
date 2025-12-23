@@ -1,4 +1,4 @@
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { SaveIcon } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -32,22 +32,20 @@ const proxySchema = z
     host: z.string(),
     port: z.coerce.number().int().min(0).max(65535),
   })
-  .refine(
-    (arg) => arg.type !== 'http' || (arg.host.length > 0 && arg.port > 0),
-    (arg) => {
-      if (arg.host.length === 0) {
-        return {
-          message: 'Hostname must not be empty.',
-          path: ['host'],
-        };
-      }
-
+  .refine((arg) => arg.type !== 'http' || (arg.host.length > 0 && arg.port > 0))
+  .refine((arg) => {
+    if (arg.host.length === 0) {
       return {
-        message: 'Port must not be zero.',
-        path: ['port'],
+        message: 'Hostname must not be empty.',
+        path: ['host'],
       };
-    },
-  );
+    }
+
+    return {
+      message: 'Port must not be zero.',
+      path: ['port'],
+    };
+  });
 
 export type ProxySettings = z.infer<typeof proxySchema>;
 
@@ -60,7 +58,7 @@ const defaultProxySettings = Object.freeze<ProxySettings>({
 export default function ProxySettingsCard() {
   const [proxy, save] = useSettings('proxy', defaultProxySettings);
   const form = useForm<ProxySettings>({
-    resolver: zodResolver(proxySchema),
+    resolver: standardSchemaResolver(proxySchema),
     defaultValues: proxy,
   });
   const values = form.watch();

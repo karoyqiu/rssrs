@@ -26,7 +26,7 @@ import { commands } from '@/lib/bindings';
 
 export const addSeedSchema = z.object({
   name: z.string().min(1),
-  url: z.string().url(),
+  url: z.url(),
 });
 export type AddSeedType = z.infer<typeof addSeedSchema>;
 

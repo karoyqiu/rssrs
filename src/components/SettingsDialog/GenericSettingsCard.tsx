@@ -1,4 +1,4 @@
-import { zodResolver } from '@hookform/resolvers/zod';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { SaveIcon } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -42,7 +42,7 @@ export const defaultGenericSettings = Object.freeze<GenericSettings>({
 export default function GenericSettingsCard() {
   const [generic, save] = useSettings('generic', defaultGenericSettings);
   const form = useForm<GenericSettings>({
-    resolver: zodResolver(genericSchema),
+    resolver: standardSchemaResolver(genericSchema),
     defaultValues: generic,
   });
 
