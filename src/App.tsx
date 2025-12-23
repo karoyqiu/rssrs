@@ -4,7 +4,6 @@ import {
   KeyboardSensor,
   PointerSensor,
   type UniqueIdentifier,
-  closestCenter,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
@@ -44,7 +43,7 @@ function App() {
   const [search, setSearch] = useDebounceValue('', 500);
   const [autoRead, setAutoRead] = useLocalStorage('autoRead', true);
   const [unreadOnly, setUnreadOnly] = useLocalStorage('unreadOnly', true);
-  const { seeds } = useSeeds();
+  const { seeds, reorder } = useSeeds();
 
   const { defaultLayout, onLayoutChange } = useDefaultLayout({
     id: 'root',
@@ -98,10 +97,10 @@ function App() {
               <SeedToggleItem seed={null} />
               <DndContext
                 sensors={sensors}
-                collisionDetection={closestCenter}
                 onDragStart={({ active }) => setActiveId(active.id)}
-                onDragEnd={({ active, over }) => {
+                onDragEnd={async ({ active, over }) => {
                   if (active.id !== over?.id) {
+                    reorder(active.id as number, (over?.id as number) ?? 0);
                   }
 
                   setActiveId(0);

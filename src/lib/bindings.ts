@@ -87,8 +87,8 @@ async dbUpdateSeed(seedId: number, name: string, url: string) : Promise<boolean>
 /**
  * 更新种子排序。
  */
-async dbUpdateSeedRank(seedId: number, rank: number) : Promise<boolean> {
-    return await TAURI_INVOKE("db_update_seed_rank", { seedId, rank });
+async dbUpdateSeedsRank(seedIds: number[]) : Promise<boolean> {
+    return await TAURI_INVOKE("db_update_seeds_rank", { seedIds });
 },
 /**
  * 下载指定 URL 的数据

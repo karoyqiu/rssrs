@@ -207,14 +207,16 @@ pub async fn db_update_seed(
 /// 更新种子排序。
 #[tauri::command]
 #[specta::specta]
-pub async fn db_update_seed_rank(
+pub async fn db_update_seeds_rank(
   app_handle: AppHandle,
-  seed_id: i64,
-  rank: i32,
+  seed_ids: Vec<i64>,
 ) -> bool {
   let result = app_handle.db(|db| -> Result<()> {
     let mut stmt = db.prepare("UPDATE seeds SET rank = ?2 WHERE id = ?1")?;
-    stmt.execute(params![seed_id, rank])?;
+
+    for (index, &seed_id) in seed_ids.iter().enumerate() {
+      stmt.execute(params![seed_id, index])?;
+    }
 
     SeedAddEvent {}.emit(&app_handle).unwrap();
 
