@@ -19,6 +19,8 @@ import '@/globals.css';
 import { commands } from '@/lib/bindings';
 import useSeeds from '@/lib/useSeeds';
 
+import EditSeedDialog from './components/EditSeedDialog';
+
 const appWindow = getCurrentWebviewWindow();
 
 function App() {
@@ -118,6 +120,7 @@ function App() {
             />
           </ScrollArea>
         </div>
+        <EditSeedDialog.Root />
       </ResizablePanel>
     </ResizablePanelGroup>
   );

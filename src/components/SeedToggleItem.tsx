@@ -1,5 +1,11 @@
-import { ListIcon, RssIcon } from 'lucide-react';
+import { EditIcon, ListIcon, RssIcon } from 'lucide-react';
 
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
 import { ToggleGroupItem } from '@/components/ui/toggle-group';
 import type { Seed } from '@/lib/bindings';
 import useSeedUnreadCount from '@/lib/useSeedUnreadCount';
@@ -21,13 +27,21 @@ const SeedToggleItem = function SeedToggleItem({
 
   if (seed) {
     return (
-      <EditSeedDialog seed={seed}>
-        <ToggleGroupItem ref={ref} className="w-full justify-start" value={seed.id.toString()}>
-          <RssIcon />
-          <span>{seed.name}</span>
-          <span className="ms-auto font-mono">{unread || ''}</span>
-        </ToggleGroupItem>
-      </EditSeedDialog>
+      <ContextMenu>
+        <ContextMenuTrigger className="w-full">
+          <ToggleGroupItem ref={ref} className="w-full justify-start" value={seed.id.toString()}>
+            <RssIcon />
+            <span>{seed.name}</span>
+            <span className="ms-auto font-mono">{unread || ''}</span>
+          </ToggleGroupItem>
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem className="gap-2" onClick={() => EditSeedDialog.call({ seed })}>
+            <EditIcon />
+            Edit
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
     );
   }
 

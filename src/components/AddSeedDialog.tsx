@@ -55,6 +55,7 @@ export default function AddSeedDialog(props: AddSeedDialogProps) {
         <Form {...form}>
           <form
             className="flex flex-col gap-2"
+            autoComplete="off"
             onSubmit={form.handleSubmit(async (values) => {
               const { name, url } = values;
               const result = await commands.dbInsertSeed(name, url);

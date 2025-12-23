@@ -1,23 +1,11 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import { EditIcon, SaveIcon, TrashIcon } from 'lucide-react';
-import { type ReactNode, useState } from 'react';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
+import { SaveIcon, TrashIcon } from 'lucide-react';
+import { createCallable } from 'react-call';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from '@/components/ui/context-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -33,30 +21,16 @@ import { type AddSeedType, addSeedSchema } from './AddSeedDialog';
 
 type EditSeedDialogProps = {
   seed: Pick<Seed, 'id' | 'name' | 'url'>;
-  children: ReactNode;
 };
 
-export default function EditSeedDialog(props: EditSeedDialogProps) {
-  const { seed, children } = props;
-  const [open, setOpen] = useState(false);
+const EditSeedDialog = createCallable<EditSeedDialogProps>(({ seed, call }) => {
   const form = useForm<AddSeedType>({
-    resolver: zodResolver(addSeedSchema),
+    resolver: standardSchemaResolver(addSeedSchema),
     defaultValues: seed,
   });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <ContextMenu>
-        <ContextMenuTrigger className="w-full">{children}</ContextMenuTrigger>
-        <ContextMenuContent>
-          <DialogTrigger asChild>
-            <ContextMenuItem className="gap-2">
-              <EditIcon />
-              Edit
-            </ContextMenuItem>
-          </DialogTrigger>
-        </ContextMenuContent>
-      </ContextMenu>
+    <Dialog defaultOpen>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit seed</DialogTitle>
@@ -64,12 +38,13 @@ export default function EditSeedDialog(props: EditSeedDialogProps) {
         <Form {...form}>
           <form
             className="flex flex-col gap-2"
+            autoComplete="off"
             onSubmit={form.handleSubmit(async (values) => {
               const { name, url } = values;
               const result = await commands.dbUpdateSeed(seed.id, name, url);
 
               if (result) {
-                setOpen(false);
+                call.end();
               } else {
                 toast.error('Failed to save seed.');
               }
@@ -101,7 +76,7 @@ export default function EditSeedDialog(props: EditSeedDialogProps) {
                 </FormItem>
               )}
             />
-            <div className="flex mt-2">
+            <div className="mt-2 flex">
               <Button
                 type="button"
                 variant="destructive"
@@ -109,7 +84,7 @@ export default function EditSeedDialog(props: EditSeedDialogProps) {
                   const result = await commands.dbDeleteSeed(seed.id);
 
                   if (result) {
-                    setOpen(false);
+                    call.end();
                   } else {
                     toast.error('Failed to delete seed.');
                   }
@@ -128,4 +103,6 @@ export default function EditSeedDialog(props: EditSeedDialogProps) {
       </DialogContent>
     </Dialog>
   );
-}
+});
+
+export default EditSeedDialog;
