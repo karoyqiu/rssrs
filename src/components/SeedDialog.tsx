@@ -1,5 +1,6 @@
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
-import { PlusIcon, SaveIcon, TrashIcon } from 'lucide-react';
+import { PlusIcon, RefreshCwIcon, SaveIcon, TrashIcon } from 'lucide-react';
+import { useState } from 'react';
 import { createCallable } from 'react-call';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -17,9 +18,10 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { type Seed, commands } from '@/lib/bindings';
+import { cn } from '@/lib/utils';
 
 const seedSchema = z.object({
-  name: z.string(),
+  name: z.string().check(z.minLength(1, 'Name is required.')),
   url: z.url(),
 });
 type seedType = z.infer<typeof seedSchema>;
@@ -29,12 +31,42 @@ type SeedDialogProps = {
 };
 
 const SeedDialog = createCallable<SeedDialogProps>(({ seed, call }) => {
+  const [isFetching, setIsFetching] = useState(false);
   const form = useForm<seedType>({
     resolver: standardSchemaResolver(seedSchema),
-    defaultValues: seed ?? {
-      name: '',
-      url: '',
+    defaultValues: {
+      name: seed?.name ?? '',
+      url: seed?.url ?? '',
     },
+  });
+
+  const { isDirty, isSubmitting } = form.formState;
+
+  const fetchNow = form.handleSubmit(async (values) => {
+    if (!seed) return;
+
+    setIsFetching(true);
+    try {
+      if (isDirty) {
+        const saved = await commands.dbUpdateSeed(seed.id, values.name, values.url);
+        if (!saved) {
+          toast.error('Failed to save seed.');
+          return;
+        }
+        form.reset(values);
+      }
+
+      try {
+        await commands.fetchSeed(seed.id);
+        toast.success('Seed fetched successfully.');
+      } catch (err) {
+        toast.error(`Failed to fetch seed: ${String(err)}`);
+      }
+    } catch (err) {
+      toast.error(`Failed to save seed: ${String(err)}`);
+    } finally {
+      setIsFetching(false);
+    }
   });
 
   return (
@@ -68,7 +100,7 @@ const SeedDialog = createCallable<SeedDialogProps>(({ seed, call }) => {
                 <FormItem>
                   <FormLabel className="required">Name</FormLabel>
                   <FormControl>
-                    <Input required {...field} />
+                    <Input required disabled={isFetching} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -81,18 +113,19 @@ const SeedDialog = createCallable<SeedDialogProps>(({ seed, call }) => {
                 <FormItem>
                   <FormLabel className="required">URL</FormLabel>
                   <FormControl>
-                    <Input required type="url" {...field} />
+                    <Input required type="url" disabled={isFetching} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <div className="mt-2 flex">
+            <div className="mt-2 flex gap-2">
               {seed ? (
                 <>
                   <Button
                     type="button"
                     variant="destructive"
+                    disabled={isFetching || isSubmitting}
                     onClick={async () => {
                       const result = await commands.dbDeleteSeed(seed.id);
 
@@ -106,7 +139,18 @@ const SeedDialog = createCallable<SeedDialogProps>(({ seed, call }) => {
                     <TrashIcon />
                     Delete
                   </Button>
-                  <Button className="ml-auto" type="submit">
+                  <Button
+                    className="ml-auto"
+                    type="button"
+                    variant="outline"
+                    disabled={isFetching || isSubmitting}
+                    aria-busy={isFetching}
+                    onClick={fetchNow}
+                  >
+                    <RefreshCwIcon className={cn(isFetching && 'animate-spin')} />
+                    Fetch now
+                  </Button>
+                  <Button type="submit" disabled={isFetching || isSubmitting}>
                     <SaveIcon />
                     Save
                   </Button>
