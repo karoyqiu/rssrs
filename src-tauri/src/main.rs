@@ -17,7 +17,8 @@ use db::{
   optimize, update_tray_tooltip,
 };
 use events::{
-  ArticleReadEvent, SeedAddEvent, SeedNewEvent, SeedUnreadCountEvent, WatchlistChangeEvent,
+  ArticleReadEvent, LogEvent, SeedAddEvent, SeedNewEvent, SeedUnreadCountEvent,
+  WatchlistChangeEvent,
 };
 use job::{check_seeds, download, fetch_seed};
 use tauri::{
@@ -67,6 +68,7 @@ fn main() {
     ])
     .events(tauri_specta::collect_events![
       ArticleReadEvent,
+      LogEvent,
       SeedAddEvent,
       SeedNewEvent,
       SeedUnreadCountEvent,
