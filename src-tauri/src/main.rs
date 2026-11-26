@@ -18,7 +18,7 @@ use db::{
 use events::{
   ArticleReadEvent, SeedAddEvent, SeedNewEvent, SeedUnreadCountEvent, WatchlistChangeEvent,
 };
-use job::{check_seeds, download};
+use job::{check_seeds, download, fetch_seed};
 use tauri::{
   AppHandle, Manager, State,
   async_runtime::spawn,
@@ -61,6 +61,7 @@ fn main() {
       db_update_seed,
       db_update_seeds_rank,
       download,
+      fetch_seed,
     ])
     .events(tauri_specta::collect_events![
       ArticleReadEvent,

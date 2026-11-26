@@ -225,6 +225,41 @@ fn save_last_fetch(app_handle: &AppHandle, seed_id: i64, ok: bool) -> Result<()>
   Ok(())
 }
 
+// The outer result reports recording failures; the inner result reports the Fetch outcome.
+async fn fetch_and_record(
+  app_handle: &AppHandle,
+  proxy: &ProxySettings,
+  generic: &GenericSettings,
+  seed: &Seed,
+) -> Result<Result<()>> {
+  let result = fetch(app_handle, proxy, generic, seed).await;
+  if let Err(err) = &result {
+    warn!("Failed to fetch {}: {:?}", &seed.name, err);
+  }
+  save_last_fetch(app_handle, seed.id, result.is_ok())?;
+  Ok(result)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn fetch_seed(app_handle: AppHandle, seed_id: i64) -> std::result::Result<(), String> {
+  let result: Result<()> = async {
+    let (proxy, generic, seed) = app_handle.db(|db| -> Result<_> {
+      Ok((
+        get_proxy(db)?,
+        get_generic_settings(db)?,
+        get_seed(db, seed_id)?,
+      ))
+    })?;
+    let result = fetch_and_record(&app_handle, &proxy, &generic, &seed).await;
+    update_tray_tooltip(&app_handle)?;
+    result??;
+    Ok(())
+  }
+  .await;
+  result.map_err(|err| format!("{err:#}"))
+}
+
 pub async fn check_seeds() -> Result<()> {
   if let Some(app_handle) = get_app_handle() {
     // 读取代理设置和种子
@@ -233,12 +268,7 @@ pub async fn check_seeds() -> Result<()> {
     for seed in seeds {
       if seed.should_fetch() {
         // 抓取
-        if let Err(err) = fetch(&app_handle, &proxy, &generic, &seed).await {
-          warn!("Failed to fetch {}: {:?}", &seed.name, err);
-          save_last_fetch(&app_handle, seed.id, false)?;
-        } else {
-          save_last_fetch(&app_handle, seed.id, true)?;
-        }
+        let _ = fetch_and_record(&app_handle, &proxy, &generic, &seed).await?;
       }
     }
 
