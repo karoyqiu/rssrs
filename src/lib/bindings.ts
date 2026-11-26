@@ -98,6 +98,9 @@ async download(url: string, referer: string | null) : Promise<string> {
 },
 async fetchSeed(seedId: number) : Promise<null> {
     return await TAURI_INVOKE("fetch_seed", { seedId });
+},
+async getLogs() : Promise<LogEntry[]> {
+    return await TAURI_INVOKE("get_logs");
 }
 }
 
@@ -178,6 +181,7 @@ id: number;
  */
 unread: boolean }
 export type ArticleResult = { articles: Article[]; nextCursor: string | null }
+export type LogEntry = { id: number; timestamp: string; level: string; message: string }
 /**
  * 种子
  */

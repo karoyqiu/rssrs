@@ -1,12 +1,13 @@
 import { DragDropProvider } from '@dnd-kit/react';
 import { isSortable } from '@dnd-kit/react/sortable';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { EyeIcon, PlusIcon, SearchIcon, SettingsIcon } from 'lucide-react';
+import { EyeIcon, LogsIcon, PlusIcon, SearchIcon, SettingsIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDefaultLayout } from 'react-resizable-panels';
 import { useDebounceValue, useLocalStorage } from 'usehooks-ts';
 
 import ArticleList from '@/components/ArticleList';
+import LogView from '@/components/LogView';
 import SeedDialog from '@/components/SeedDialog';
 import SeedToggleItem from '@/components/SeedToggleItem';
 import SettingsDialog from '@/components/SettingsDialog';
@@ -25,6 +26,7 @@ const appWindow = getCurrentWebviewWindow();
 
 function App() {
   const [seedId, setSeedId] = useState(0);
+  const [showLogs, setShowLogs] = useState(false);
   const [search, setSearch] = useDebounceValue('', 500);
   const [autoRead, setAutoRead] = useLocalStorage('autoRead', true);
   const [unreadOnly, setUnreadOnly] = useLocalStorage('unreadOnly', true);
@@ -61,6 +63,7 @@ function App() {
               spacing={1}
               value={seedId.toString()}
               onValueChange={(value) => {
+                setShowLogs(false);
                 if (value.length > 0) {
                   setSeedId(parseInt(value, 10));
                 }
@@ -89,6 +92,10 @@ function App() {
               </DragDropProvider>
             </ToggleGroup>
           </ScrollArea>
+          <Toggle pressed={showLogs} onPressedChange={setShowLogs}>
+            <LogsIcon />
+            Logs
+          </Toggle>
           <SettingsDialog>
             <Button>
               <SettingsIcon />
@@ -99,35 +106,39 @@ function App() {
       </ResizablePanel>
       <ResizableHandle />
       <ResizablePanel minSize={50}>
-        <div className="flex h-full flex-col">
-          <div className="flex gap-1 border-b p-1">
-            <Toggle pressed={autoRead} onPressedChange={setAutoRead}>
-              Auto read
-            </Toggle>
-            <Toggle pressed={unreadOnly} onPressedChange={setUnreadOnly}>
-              Unread only
-            </Toggle>
-            <Button disabled={seedId < 0} onClick={() => commands.dbReadAll(seedId)}>
-              Read all
-            </Button>
-            <div className="relative flex-1">
-              <SearchIcon className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
-              <Input
-                className="pl-10"
-                type="search"
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search"
-              />
+        {showLogs ? (
+          <LogView />
+        ) : (
+          <div className="flex h-full flex-col">
+            <div className="flex gap-1 border-b p-1">
+              <Toggle pressed={autoRead} onPressedChange={setAutoRead}>
+                Auto read
+              </Toggle>
+              <Toggle pressed={unreadOnly} onPressedChange={setUnreadOnly}>
+                Unread only
+              </Toggle>
+              <Button disabled={seedId < 0} onClick={() => commands.dbReadAll(seedId)}>
+                Read all
+              </Button>
+              <div className="relative flex-1">
+                <SearchIcon className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
+                <Input
+                  className="pl-10"
+                  type="search"
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search"
+                />
+              </div>
             </div>
+            <ScrollArea className="@container min-h-0 w-full">
+              <ArticleList
+                seedId={seedId === 0 ? null : seedId}
+                search={search}
+                unreadOnly={unreadOnly}
+              />
+            </ScrollArea>
           </div>
-          <ScrollArea className="@container min-h-0 w-full">
-            <ArticleList
-              seedId={seedId === 0 ? null : seedId}
-              search={search}
-              unreadOnly={unreadOnly}
-            />
-          </ScrollArea>
-        </div>
+        )}
         <SeedDialog.Root />
       </ResizablePanel>
     </ResizablePanelGroup>
