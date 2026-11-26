@@ -6,6 +6,7 @@ mod db;
 mod error;
 mod events;
 mod job;
+mod log_store;
 mod seed;
 
 use app_handle::set_app_handle;
@@ -61,6 +62,7 @@ fn main() {
       db_update_seed,
       db_update_seeds_rank,
       download,
+      log_store::get_logs,
     ])
     .events(tauri_specta::collect_events![
       ArticleReadEvent,
@@ -82,7 +84,7 @@ fn main() {
       .expect("Failed to export typescript bindings");
   }
 
-  env_logger::init();
+  log_store::init();
 
   #[cfg(debug_assertions)]
   let task = every(10).seconds().perform(|| async {
@@ -96,7 +98,7 @@ fn main() {
 
   spawn(task);
 
-  // 每小时优化一次数据库
+  // 姣忓皬鏃朵紭鍖栦竴娆℃暟鎹簱
   let optimze_task = every(1).hour().perform(|| async {
     optimize();
   });

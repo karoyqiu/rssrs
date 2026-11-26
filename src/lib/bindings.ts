@@ -95,6 +95,9 @@ async dbUpdateSeedsRank(seedIds: number[]) : Promise<boolean> {
  */
 async download(url: string, referer: string | null) : Promise<string> {
     return await TAURI_INVOKE("download", { url, referer });
+},
+async getLogs() : Promise<LogEntry[]> {
+    return await TAURI_INVOKE("get_logs");
 }
 }
 
@@ -175,6 +178,7 @@ id: number;
  */
 unread: boolean }
 export type ArticleResult = { articles: Article[]; nextCursor: string | null }
+export type LogEntry = { id: number; timestamp: string; level: string; message: string }
 /**
  * 种子
  */
