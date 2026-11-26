@@ -96,6 +96,9 @@ async dbUpdateSeedsRank(seedIds: number[]) : Promise<boolean> {
 async download(url: string, referer: string | null) : Promise<string> {
     return await TAURI_INVOKE("download", { url, referer });
 },
+async fetchSeed(seedId: number) : Promise<null> {
+    return await TAURI_INVOKE("fetch_seed", { seedId });
+},
 async getLogs() : Promise<LogEntry[]> {
     return await TAURI_INVOKE("get_logs");
 }

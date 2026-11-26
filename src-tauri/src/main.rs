@@ -19,7 +19,7 @@ use db::{
 use events::{
   ArticleReadEvent, SeedAddEvent, SeedNewEvent, SeedUnreadCountEvent, WatchlistChangeEvent,
 };
-use job::{check_seeds, download};
+use job::{check_seeds, download, fetch_seed};
 use tauri::{
   AppHandle, Manager, State,
   async_runtime::spawn,
@@ -62,6 +62,7 @@ fn main() {
       db_update_seed,
       db_update_seeds_rank,
       download,
+      fetch_seed,
       log_store::get_logs,
     ])
     .events(tauri_specta::collect_events![
@@ -98,7 +99,7 @@ fn main() {
 
   spawn(task);
 
-  // 姣忓皬鏃朵紭鍖栦竴娆℃暟鎹簱
+  // 婵絽绻愰惃顒勫籍閺堢數鍠橀柛鏍ㄧ墧缁旀潙鈻庨埄鍐╂闁硅鍠栫花?
   let optimze_task = every(1).hour().perform(|| async {
     optimize();
   });
