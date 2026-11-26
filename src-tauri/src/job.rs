@@ -173,6 +173,23 @@ fn insert_items(app_handle: &AppHandle, seed_id: i64, items: &Vec<Item>) -> Resu
   })
 }
 
+fn save_failed_response(seed_id: i64, content: &[u8]) -> std::io::Result<std::path::PathBuf> {
+  use std::io::Write;
+
+  let path = std::env::temp_dir().join(format!(
+    "rssrs-fetch-{}-{}-{}.bin",
+    seed_id,
+    std::process::id(),
+    Local::now().format("%Y%m%d-%H%M%S-%f")
+  ));
+  let mut file = std::fs::OpenOptions::new()
+    .write(true)
+    .create_new(true)
+    .open(&path)?;
+  file.write_all(content)?;
+  Ok(path)
+}
+
 async fn fetch(
   app_handle: &AppHandle,
   proxy: &ProxySettings,
@@ -199,11 +216,21 @@ async fn fetch(
 
   #[cfg(debug_assertions)]
   {
-    let s = String::from_utf8(content.to_vec())?;
+    let s = String::from_utf8_lossy(&content);
     log::trace!("Fetched {}, {}", &seed.name, s);
   }
 
-  let channel = Channel::read_from(&content[..])?;
+  let channel = Channel::read_from(&content[..]).map_err(|err| {
+    match save_failed_response(seed.id, &content) {
+      Ok(path) => warn!(
+        "Failed response for {} saved to {}",
+        seed.name,
+        path.display()
+      ),
+      Err(save_err) => warn!("Failed to save response for {}: {}", seed.name, save_err),
+    }
+    err
+  })?;
 
   if !channel.items.is_empty() {
     debug!("First item {:?}", &channel.items[0]);
@@ -215,6 +242,23 @@ async fn fetch(
   info!("Fetched {}", &seed.name);
 
   Ok(())
+}
+
+#[cfg(test)]
+mod response_tests {
+  use super::save_failed_response;
+
+  #[test]
+  fn saves_complete_response_without_changing_bytes_or_overwriting() {
+    let content = b"<html>error</html>\0\xff";
+    let first = save_failed_response(0, content).unwrap();
+    let second = save_failed_response(0, b"second response").unwrap();
+    assert_ne!(first, second);
+    assert_eq!(std::fs::read(&first).unwrap(), content);
+    assert_eq!(std::fs::read(&second).unwrap(), b"second response");
+    std::fs::remove_file(first).unwrap();
+    std::fs::remove_file(second).unwrap();
+  }
 }
 
 fn save_last_fetch(app_handle: &AppHandle, seed_id: i64, ok: bool) -> Result<()> {
