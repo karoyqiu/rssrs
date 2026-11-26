@@ -1,4 +1,5 @@
 use std::{
+  cell::Cell,
   collections::VecDeque,
   sync::{LazyLock, Mutex},
 };
@@ -7,6 +8,9 @@ use chrono::Local;
 use log::{Level, LevelFilter, Log, Metadata, Record};
 use serde::Serialize;
 use specta::Type;
+use tauri_specta::Event;
+
+use crate::{app_handle::get_app_handle, events::LogEvent};
 
 #[derive(Clone, Serialize, Type)]
 pub struct LogEntry {
@@ -23,18 +27,22 @@ pub struct LogStore {
 }
 
 impl LogStore {
-  pub fn record(&mut self, level: Level, message: String) {
+  pub fn record(&mut self, level: Level, message: String) -> Option<LogEntry> {
     if level <= Level::Info {
       if self.entries.len() == 1000 {
         self.entries.pop_front();
       }
       self.next_id += 1;
-      self.entries.push_back(LogEntry {
+      let entry = LogEntry {
         id: self.next_id,
         timestamp: Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
         level: level.to_string(),
         message,
-      });
+      };
+      self.entries.push_back(entry.clone());
+      Some(entry)
+    } else {
+      None
     }
   }
 
@@ -44,6 +52,18 @@ impl LogStore {
 }
 
 static STORE: LazyLock<Mutex<LogStore>> = LazyLock::new(|| Mutex::new(LogStore::default()));
+
+thread_local! {
+  static LOGGING: Cell<bool> = const { Cell::new(false) };
+}
+
+struct LoggingGuard<'a>(&'a Cell<bool>);
+
+impl Drop for LoggingGuard<'_> {
+  fn drop(&mut self) {
+    self.0.set(false);
+  }
+}
 
 struct Logger {
   console: env_logger::Logger,
@@ -55,11 +75,23 @@ impl Log for Logger {
   }
 
   fn log(&self, record: &Record<'_>) {
-    self.console.log(record);
-    if record.level() <= Level::Info {
-      let message = record.args().to_string();
-      STORE.lock().unwrap().record(record.level(), message);
-    }
+    LOGGING.with(|logging| {
+      if logging.replace(true) {
+        return;
+      }
+      let _guard = LoggingGuard(logging);
+      self.console.log(record);
+      if record.level() <= Level::Info {
+        let message = record.args().to_string();
+        // Release the store before emitting: event delivery can itself log or read the store.
+        let entry = STORE.lock().unwrap().record(record.level(), message);
+        if let (Some(entry), Some(app)) = (entry, get_app_handle()) {
+          if let Err(error) = LogEvent(entry).emit(&app) {
+            eprintln!("Failed to emit log entry: {error}");
+          }
+        }
+      }
+    });
   }
 
   fn flush(&self) {
@@ -89,7 +121,9 @@ mod tests {
   fn records_local_timestamp_level_and_message() {
     let mut store = LogStore::default();
     let before = chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
-    store.record(Level::Warn, "Failed to fetch Foo: timeout".into());
+    let recorded = store
+      .record(Level::Warn, "Failed to fetch Foo: timeout".into())
+      .expect("captured records are available for live delivery");
     let after = chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
     let entries = store.entries();
     let entry = &entries[0];
@@ -97,6 +131,10 @@ mod tests {
     assert!(entry.timestamp >= before && entry.timestamp <= after);
     assert_eq!(entry.level, "WARN");
     assert_eq!(entry.message, "Failed to fetch Foo: timeout");
+    assert_eq!(recorded.id, entry.id);
+    assert_eq!(recorded.timestamp, entry.timestamp);
+    assert_eq!(recorded.level, entry.level);
+    assert_eq!(recorded.message, entry.message);
   }
 
   #[test]

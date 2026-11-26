@@ -109,12 +109,14 @@ async getLogs() : Promise<LogEntry[]> {
 
 export const events = __makeEvents__<{
 articleReadEvent: ArticleReadEvent,
+logEvent: LogEvent,
 seedAddEvent: SeedAddEvent,
 seedNewEvent: SeedNewEvent,
 seedUnreadCountEvent: SeedUnreadCountEvent,
 watchlistChangeEvent: WatchlistChangeEvent
 }>({
 articleReadEvent: "article-read-event",
+logEvent: "log-event",
 seedAddEvent: "seed-add-event",
 seedNewEvent: "seed-new-event",
 seedUnreadCountEvent: "seed-unread-count-event",
@@ -182,6 +184,7 @@ id: number;
 unread: boolean }
 export type ArticleResult = { articles: Article[]; nextCursor: string | null }
 export type LogEntry = { id: number; timestamp: string; level: string; message: string }
+export type LogEvent = LogEntry
 /**
  * 种子
  */

@@ -2,6 +2,11 @@ use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri_specta::Event;
 
+use crate::log_store::LogEntry;
+
+#[derive(Clone, Serialize, Type, Event)]
+pub struct LogEvent(pub LogEntry);
+
 /// 种子添加事件
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, Type, Event)]
 pub struct SeedAddEvent;
