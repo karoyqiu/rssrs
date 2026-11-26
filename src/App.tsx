@@ -21,6 +21,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import '@/globals.css';
 import { commands } from '@/lib/bindings';
 import useSeeds from '@/lib/useSeeds';
+import { cn } from '@/lib/utils';
 
 const appWindow = getCurrentWebviewWindow();
 
@@ -106,39 +107,36 @@ function App() {
       </ResizablePanel>
       <ResizableHandle />
       <ResizablePanel minSize={50}>
-        {showLogs ? (
-          <LogView />
-        ) : (
-          <div className="flex h-full flex-col">
-            <div className="flex gap-1 border-b p-1">
-              <Toggle pressed={autoRead} onPressedChange={setAutoRead}>
-                Auto read
-              </Toggle>
-              <Toggle pressed={unreadOnly} onPressedChange={setUnreadOnly}>
-                Unread only
-              </Toggle>
-              <Button disabled={seedId < 0} onClick={() => commands.dbReadAll(seedId)}>
-                Read all
-              </Button>
-              <div className="relative flex-1">
-                <SearchIcon className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
-                <Input
-                  className="pl-10"
-                  type="search"
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search"
-                />
-              </div>
-            </div>
-            <ScrollArea className="@container min-h-0 w-full">
-              <ArticleList
-                seedId={seedId === 0 ? null : seedId}
-                search={search}
-                unreadOnly={unreadOnly}
+        {showLogs && <LogView />}
+        <div className={cn('flex h-full flex-col', showLogs && 'hidden')}>
+          <div className="flex gap-1 border-b p-1">
+            <Toggle pressed={autoRead} onPressedChange={setAutoRead}>
+              Auto read
+            </Toggle>
+            <Toggle pressed={unreadOnly} onPressedChange={setUnreadOnly}>
+              Unread only
+            </Toggle>
+            <Button disabled={seedId < 0} onClick={() => commands.dbReadAll(seedId)}>
+              Read all
+            </Button>
+            <div className="relative flex-1">
+              <SearchIcon className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
+              <Input
+                className="pl-10"
+                type="search"
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search"
               />
-            </ScrollArea>
+            </div>
           </div>
-        )}
+          <ScrollArea className="@container min-h-0 w-full">
+            <ArticleList
+              seedId={seedId === 0 ? null : seedId}
+              search={search}
+              unreadOnly={unreadOnly}
+            />
+          </ScrollArea>
+        </div>
         <SeedDialog.Root />
       </ResizablePanel>
     </ResizablePanelGroup>

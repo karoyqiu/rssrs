@@ -101,7 +101,7 @@ fn main() {
 
   spawn(task);
 
-  // 婵絽绻愰惃顒勫籍閺堢數鍠橀柛鏍ㄧ墧缁旀潙鈻庨埄鍐╂闁硅鍠栫花?
+  // 每小时优化一次数据库
   let optimze_task = every(1).hour().perform(|| async {
     optimize();
   });
